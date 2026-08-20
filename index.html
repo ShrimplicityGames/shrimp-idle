@@ -1,0 +1,2795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shrimp Idle</title>
+<style>
+  :root{
+    --bg:#081420;
+    --panel:#1a1f26;
+    --line:#1f3d5c;
+    --text:#eef6ff;
+    --blue:#2e6cff;
+    --blue2:#4c84ff;
+    --blue3:#6a9bff;
+    --purple:#7e49ff;
+  }
+
+  *{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  html, body, canvas, button, #controls, #topbar, #gameTitle, #statusText, #achievements{
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+    touch-action:manipulation;
+  }
+
+  html{
+    touch-action:manipulation;
+  }
+
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:linear-gradient(180deg,#080f1f 0%,#15132a 55%,#26143d 100%);
+    color:var(--text);
+    font-family:system-ui, Arial, sans-serif;
+    overflow:hidden;
+  }
+
+  #topbar{
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    min-height:58px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:4px;
+    font-size:14px;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+    z-index:5;
+    padding:7px 38px 7px 10px;
+    text-align:center;
+  }
+
+  #topline{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:16px;
+    width:100%;
+    white-space:nowrap;
+  }
+
+  #typeline{
+    width:100%;
+    white-space:nowrap;
+    font-weight:700;
+    opacity:.9;
+  }
+
+  #topbar span{
+    white-space:nowrap;
+  }
+
+  #gameTitle{
+    position:fixed;
+    top:58px;
+    left:0;
+    right:0;
+    height:56px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    font-size:18px;
+    font-weight:700;
+    letter-spacing:.35px;
+    pointer-events:none;
+    z-index:5;
+    background:rgba(26,31,38,.96);
+    border-bottom:1px solid rgba(86,100,118,.55);
+    transition:color .25s linear, transform .18s ease-out;
+    text-shadow:
+      0 1px 2px rgba(0,0,0,.82),
+      0 0 10px rgba(255,255,255,.18);
+  }
+
+  #studioTag{
+    font-size:11px;
+    opacity:.55;
+    letter-spacing:.4px;
+    margin-top:2px;
+  }
+
+  #statusText{
+    position:fixed;
+    top:120px;
+    left:50%;
+    transform:translateX(-50%);
+    max-width:min(88vw, 720px);
+    text-align:center;
+    font-size:14px;
+    color:rgba(238,246,255,.82);
+    text-shadow:0 2px 10px rgba(0,0,0,.35);
+    z-index:5;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .7s ease;
+    padding:0 12px;
+    line-height:1.35;
+  }
+
+#achBtn{
+  position:fixed;
+  right:10px;
+  top:8px;
+  cursor:pointer;
+  opacity:.85;
+  z-index:6;
+  user-select:none;
+  font-size:18px;
+  min-width:auto;
+  width:30px;
+  height:30px;
+  padding:0;
+  border:none;
+  border-radius:8px;
+  background:transparent;
+  color:var(--text);
+  box-shadow:none;
+  line-height:30px;
+}
+#achBtn:focus-visible{
+  outline:2px solid rgba(143,212,255,.75);
+  outline-offset:2px;
+}
+
+
+  #achievements{
+    position:fixed;
+    top:64px;
+    right:10px;
+    width:210px;
+    max-height:260px;
+    overflow:auto;
+    background:#102238;
+    border:1px solid #254566;
+    border-radius:12px;
+    padding:10px;
+    display:none;
+    z-index:6;
+    font-size:12px;
+    line-height:1.45;
+    box-shadow:0 8px 20px rgba(0,0,0,.35);
+  }
+
+  #achievements .locked{
+    opacity:.5;
+  }
+
+  #achievements .title{
+    font-weight:700;
+    margin-bottom:6px;
+  }
+
+  canvas{
+    display:block;
+    width:100vw;
+    height:calc(100vh - 114px);
+    margin-top:114px;
+    background:#0d2136;
+  }
+
+  #controls{
+    position:fixed;
+    bottom:10px;
+    left:0;
+    right:0;
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    z-index:5;
+    flex-wrap:wrap;
+    padding:0 10px;
+  }
+
+  button{
+    border:none;
+    padding:10px 16px;
+    border-radius:999px;
+    background:var(--blue);
+    color:white;
+    font-size:14px;
+    cursor:pointer;
+    min-width:120px;
+    box-shadow:0 4px 12px rgba(0,0,0,.18);
+  }
+
+  button:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+  }
+
+  #buy10{ background:var(--blue2); }
+  #buyMax{ background:var(--blue3); }
+  #prestige{ background:var(--purple); }
+
+  #styleOverlay{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:20;
+    background:rgba(3,8,14,.78);
+    backdrop-filter:blur(8px);
+    padding:18px;
+  }
+
+  #styleCard{
+    width:min(92vw,560px);
+    background:linear-gradient(180deg,rgba(15,32,51,.96),rgba(8,17,30,.98));
+    border:1px solid rgba(157,211,255,.35);
+    border-radius:22px;
+    box-shadow:0 20px 70px rgba(0,0,0,.45);
+    padding:20px;
+    color:var(--text);
+    transform:translateY(18px);
+    opacity:0;
+    transition:opacity .45s ease, transform .45s ease;
+  }
+
+  #styleOverlay.show #styleCard{
+    transform:translateY(0);
+    opacity:1;
+  }
+
+  #styleCard h2{
+    margin:0 0 4px;
+    font-size:24px;
+    text-align:center;
+    color:#bfe8ff;
+  }
+
+  #styleCard .styleSub{
+    text-align:center;
+    opacity:.68;
+    font-size:13px;
+    margin-bottom:18px;
+  }
+
+  .styleSection{
+    margin-top:14px;
+  }
+
+  .styleSectionTitle{
+    font-size:13px;
+    opacity:.75;
+    margin-bottom:8px;
+    letter-spacing:.3px;
+  }
+
+  .styleGrid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:9px;
+  }
+
+  .styleChoice{
+    min-width:0;
+    border:1px solid rgba(157,211,255,.24);
+    border-radius:14px;
+    background:rgba(255,255,255,.04);
+    color:var(--text);
+    padding:10px;
+    text-align:left;
+    box-shadow:none;
+  }
+
+  .styleChoice.selected{
+    border-color:#8fd4ff;
+    box-shadow:0 0 18px rgba(143,212,255,.18);
+    background:rgba(143,212,255,.10);
+  }
+
+  .swatch{
+    width:100%;
+    height:34px;
+    border-radius:10px;
+    margin-bottom:7px;
+    border:1px solid rgba(255,255,255,.15);
+  }
+
+  #applyStyle{
+    margin-top:16px;
+    width:100%;
+    background:linear-gradient(180deg,#2e6cff,#1949bd);
+    text-align:center;
+  }
+
+
+  @media (max-width: 720px){
+    #topbar{
+      gap:4px;
+      font-size:12px;
+      padding-right:34px;
+    }
+
+    #topline{
+      gap:12px;
+    }
+
+    #gameTitle{
+      top:58px;
+      height:58px;
+      font-size:17px;
+    }
+
+    #statusText{
+      top:124px;
+      font-size:13px;
+    }
+
+    canvas{
+      height:calc(100vh - 116px);
+      margin-top:116px;
+    }
+
+    button{
+      min-width:108px;
+      font-size:13px;
+      padding:10px 12px;
+    }
+
+    #achievements{
+      width:180px;
+    }
+
+    #studioTag{
+      font-size:10px;
+    }
+  }
+
+.achievementItem{
+  margin: 8px 0;
+  padding: 8px 9px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.045);
+}
+.achievementName{
+  font-weight: 800;
+  color: #eef7ff;
+}
+.achievementDesc{
+  font-size: 12px;
+  opacity: .78;
+  margin-top: 2px;
+}
+.achievementFlavor{
+  font-size: 11px;
+  opacity: .58;
+  margin-top: 3px;
+  font-style: italic;
+}
+.achievementItem.locked{
+  opacity: .45;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Itch.io iframe save warning -->
+<div id="itchBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a1f26;border-bottom:2px solid #2e6cff;padding:10px 16px;align-items:center;justify-content:space-between;gap:12px;font-family:sans-serif;font-size:13px;color:#eef6ff;">
+  <span>⚠️ Saves won't persist in the itch.io embed. Open in a new tab to keep your progress.</span>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button onclick="window.open(window.location.href,'_blank')" style="background:#2e6cff;color:#fff;border:none;border-radius:4px;padding:6px 14px;cursor:pointer;font-size:13px;">Open in New Tab</button>
+    <button onclick="document.getElementById('itchBanner').style.display='none'" style="background:transparent;color:#aaa;border:1px solid #444;border-radius:4px;padding:6px 10px;cursor:pointer;font-size:13px;">Dismiss</button>
+  </div>
+</div>
+<script>
+  if(window.self !== window.top){
+    document.getElementById("itchBanner").style.display = "flex";
+  }
+</script>
+
+<div id="topbar">
+  <div id="topline">
+    <span>coins: <span id="coins">0</span></span>
+    <span>shrimp: <span id="shrimp">1</span></span>
+    <span>shells: <span id="shells">0</span></span>
+    <span>total: <span id="totalShrimp">1</span></span>
+  </div>
+  <div id="typeline">type: <span id="shrimpType">Cherry Red</span></div>
+</div>
+
+<div id="gameTitle">
+  Shrimp Idle
+  <div id="studioTag">Shrimplicity Games ©</div>
+</div>
+
+<div id="statusText"></div>
+
+<button id="achBtn" type="button" aria-label="Achievements" title="Achievements">🏆</button>
+<div id="achievements"></div>
+
+<canvas id="c"></canvas>
+
+<div id="controls">
+  <button id="buy">Buy shrimp (10)</button>
+  <button id="buy10">Buy 10</button>
+  <button id="buyMax">Buy max</button>
+  <button id="prestige">Prestige (500)</button>
+</div>
+
+<div id="styleOverlay">
+  <div id="styleCard">
+    <h2>New Jar</h2>
+    <div class="styleSub">Choose the look for this prestige cycle. Purely visual, because apparently restraint happened.</div>
+
+    <div class="styleSection">
+      <div class="styleSectionTitle">Substrate</div>
+      <div class="styleGrid" id="substrateChoices"></div>
+    </div>
+
+    <div class="styleSection">
+      <div class="styleSectionTitle">Background</div>
+      <div class="styleGrid" id="backgroundChoices"></div>
+    </div>
+
+    <button id="applyStyle">Begin</button>
+  </div>
+</div>
+
+<script>
+
+// Mobile polish: stop double-tap zoom and long-press selection.
+let lastTouchEnd = 0;
+document.addEventListener("touchend", (e) => {
+  const now = Date.now();
+  if(now - lastTouchEnd <= 350){
+    e.preventDefault();
+  }
+  lastTouchEnd = now;
+}, {passive:false});
+
+document.addEventListener("selectstart", (e) => {
+  e.preventDefault();
+});
+
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+const titleEl = document.getElementById("gameTitle");
+const buyBtn = document.getElementById("buy");
+const buy10Btn = document.getElementById("buy10");
+const buyMaxBtn = document.getElementById("buyMax");
+const prestigeBtn = document.getElementById("prestige");
+const coinsEl = document.getElementById("coins");
+const shrimpEl = document.getElementById("shrimp");
+const shellsEl = document.getElementById("shells");
+const totalShrimpEl = document.getElementById("totalShrimp");
+const shrimpTypeEl = document.getElementById("shrimpType");
+const achBtn = document.getElementById("achBtn");
+const achPanel = document.getElementById("achievements");
+const statusTextEl = document.getElementById("statusText");
+const styleOverlay = document.getElementById("styleOverlay");
+const substrateChoicesEl = document.getElementById("substrateChoices");
+const backgroundChoicesEl = document.getElementById("backgroundChoices");
+const applyStyleBtn = document.getElementById("applyStyle");
+const MAX_OFFLINE_SECONDS = 60 * 60 * 24;
+const BREED_RATE_PER_SHRIMP = 0.00005;
+
+function canvasHeight(){
+  return Math.max(220, window.innerHeight - (window.innerWidth <= 720 ? 116 : 114));
+}
+
+function resize(){
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const h = canvasHeight();
+  canvas.width = Math.floor(window.innerWidth * dpr);
+  canvas.height = Math.floor(h * dpr);
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = h + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+resize();
+window.addEventListener("resize", resize);
+
+const SAVE_KEY = "shrimp_idle_release";
+const VERSION = "1.1";
+
+function storageAvailable(type){
+  try{
+    const storage = window[type];
+    const testKey = "__shrimp_idle_storage_test__";
+    storage.setItem(testKey, "1");
+    storage.removeItem(testKey);
+    return true;
+  } catch(e){
+    return false;
+  }
+}
+
+const canUseLocalStorage = storageAvailable("localStorage");
+
+function writeSaveData(key, value){
+  try{
+    if(canUseLocalStorage) localStorage.setItem(key, value);
+  } catch(e){
+    console.warn("save failed:", e);
+  }
+}
+
+function readSaveData(key){
+  try{
+    if(canUseLocalStorage) return localStorage.getItem(key);
+  } catch(e){
+    console.warn("load failed:", e);
+  }
+  return null;
+}
+
+const shrimpVariants = [
+  {name:"Cherry Red", color:"#d62828"},
+  {name:"Blue Dream", color:"#1d4ed8"},
+  {name:"Green Jade", color:"#22c55e"},
+  {name:"Yellow", color:"#facc15"},
+  {name:"Black Rose", color:"#111111"},
+
+  {name:"Orange Sakura", color:"#f97316"},
+  {name:"Snowball", color:"#e5e7eb"},
+  {name:"Blue Velvet", color:"#2563eb"},
+  {name:"Chocolate", color:"#5a3a2e"},
+  {name:"Red Rili", color:"#ef4444", pattern:"rili", accent:"#fff1f1"},
+
+  {name:"White Pearl", color:"#f8fafc"},
+  {name:"Jade Rili", color:"#4ade80", pattern:"rili", accent:"#eefaf1"},
+  {name:"Bloody Mary", color:"#8b0000"},
+  {name:"Blue Jelly", color:"#60a5fa"},
+  {name:"Golden Back", color:"#fbbf24"},
+
+  {name:"Carbon Rili", color:"#1f2937", pattern:"rili", accent:"#e8edf5"},
+  {name:"Fire Red", color:"#e63946"},
+  {name:"Orange Rili", color:"#fb923c", pattern:"rili", accent:"#f6efe7"},
+  {name:"Wild Type", color:"#6b7280"},
+  {name:"Blue Rili", color:"#3b82f6", pattern:"rili", accent:"#eef5ff"},
+
+  {name:"Painted Fire Red", color:"#b11226"},
+  {name:"Black Rili", color:"#111827", pattern:"rili", accent:"#f3f4f6"},
+  {name:"Yellow Neon", color:"#fde047"},
+  {name:"Metallic Purple", color:"#7c3aed"},
+  {name:"Sakura Red", color:"#c81d25"}
+];
+
+
+const substrates = [
+  {id:"black", name:"Black Sand", colors:["#0e1115","#24282f","#050607"], specks:["#3b424d","#1b2027","#6a6f78"]},
+  {id:"white", name:"White Sand", colors:["#cfc4aa","#f1e7cf","#98896d"], specks:["#ffffff","#d7c7a2","#9b8f78"]},
+  {id:"gravel", name:"Natural Gravel", colors:["#534a3d","#8a7a62","#28231d"], specks:["#a18b67","#645844","#b8a47e"]},
+  {id:"earthy", name:"Earthy Stones", colors:["#2f241b","#6f5136","#15100c"], specks:["#8d6944","#3f3024","#a78355"]},
+  {id:"mixed", name:"Mixed Riverbed", colors:["#2a2823","#776f5f","#151613"], specks:["#b69c73","#5d6b68","#30291f"]}
+];
+
+const backgrounds = [
+  {id:"deep", name:"Deep Blue", top:"#071521", mid:"#0b2234", bottom:"#08101c"},
+  {id:"purple", name:"Soft Purple", top:"#080f1f", mid:"#15132a", bottom:"#26143d"},
+  {id:"green", name:"Dark Green", top:"#071916", mid:"#0e2b25", bottom:"#07110f"},
+  {id:"amber", name:"Warm Amber", top:"#16100a", mid:"#2b1f13", bottom:"#090807"},
+  {id:"void", name:"Void Black", top:"#02060b", mid:"#06101a", bottom:"#010207"}
+];
+
+let pendingStyle = {substrate:null, background:null};
+const achievements = [
+  { id:"s5", name:"Tiny Colony", desc:"Reach 5 shrimp", flavor:"They seem harmless.", test:s=>s.shrimp>=5 },
+  { id:"s10", name:"Busy Jar", desc:"Reach 10 shrimp", flavor:"The glass feels smaller already.", test:s=>s.shrimp>=10 },
+  { id:"s25", name:"Shrimp Crowd", desc:"Reach 25 shrimp", flavor:"There are legs everywhere.", test:s=>s.shrimp>=25 },
+  { id:"s50", name:"Local Biohazard", desc:"Reach 50 shrimp", flavor:"This could have been prevented.", test:s=>s.shrimp>=50 },
+  { id:"s75", name:"Population Boom", desc:"Reach 75 shrimp", flavor:"The ecosystem has entered negotiations.", test:s=>s.shrimp>=75 },
+  { id:"s100", name:"Shrimp Responsibility Failure", desc:"Reach 100 shrimp", flavor:"You were warned by absolutely nobody.", test:s=>s.shrimp>=100 },
+  { id:"s125", name:"Unnatural Density", desc:"Reach 125 shrimp", flavor:"The jar now behaves as a liquid.", test:s=>s.shrimp>=125 },
+  { id:"s150", name:"The Swarm", desc:"Reach 150 shrimp", flavor:"Individual shrimp are now theoretical.", test:s=>s.shrimp>=150 },
+
+  { id:"sh1", name:"First Shell", desc:"Earn your first shell", flavor:"A small piece remains.", test:s=>s.shells>=1 },
+  { id:"sh5", name:"Shell Pile", desc:"Earn 5 shells", flavor:"This is becoming a system.", test:s=>s.shells>=5 },
+  { id:"sh10", name:"Calcium Hoard", desc:"Earn 10 shells", flavor:"The substrate economy is thriving.", test:s=>s.shells>=10 },
+  { id:"sh25", name:"Shell Baron", desc:"Earn 25 shells", flavor:"You could probably build another jar from this.", test:s=>s.shells>=25 },
+
+  { id:"m1", name:"First Mutation", desc:"See your first mutant shrimp", flavor:"That one came out different.", test:s=>s.mutationsSeen>=1 },
+  { id:"m3", name:"Lucky Genetics", desc:"See 3 mutant shrimp", flavor:"Evolution is unsupervised.", test:s=>s.mutationsSeen>=3 },
+
+  { id:"p1", name:"Fresh Start", desc:"Prestige once", flavor:"The jar clears.", test:s=>s.prestige>=1 },
+  { id:"p5", name:"Again. Again.", desc:"Prestige 5 times", flavor:"You know where everything goes now.", test:s=>s.prestige>=5 },
+  { id:"p10", name:"Eternal Cycle", desc:"Prestige 10 times", flavor:"The routine becomes comforting.", test:s=>s.prestige>=10 },
+
+  { id:"plant1", name:"First Growth", desc:"Grow your first plant", flavor:"Something rooted itself here.", test:s=>Array.isArray(s.plantSlots) && s.plantSlots.length>=1 },
+  { id:"plant6", name:"Overgrown", desc:"Grow 6 plants in one jar", flavor:"The shrimp have lost territorial control.", test:s=>Array.isArray(s.plantSlots) && s.plantSlots.length>=6 },
+  { id:"velvet", name:"Genetically Mutated Plant", desc:"Discover velvet bacopa", flavor:"That does not look entirely natural.", test:s=>s.velvetSeen===true },
+  { id:"mythshell", name:"Myth Uncovered", desc:"Find a mythical shell", flavor:"You saw that too, right?", test:s=>s.mythicalSeen===true },
+
+  { id:"stillness", name:"Still Water", desc:"Do nothing for a while", flavor:"Not everything needs to be touched.", test:s=>s.stillnessSeen===true },
+  { id:"watcher", name:"The Watcher", desc:"A shrimp pauses", flavor:"One shrimp briefly understood something.", test:s=>s.watcherSeen===true },
+  { id:"oscar", name:"Something Larger", desc:"Witness the passing shadow", flavor:"The glass is thinner than it looks.", test:s=>s.oscarSeen===true },
+  { id:"gap", name:"The Gap", desc:"Everything stops", flavor:"For a moment, nothing moved.", test:s=>s.gapSeen===true },
+  { id:"blast", name:"Blast from the Past", desc:"A shrimp from a previous cycle appears", flavor:"You recognize this one.", test:s=>s.blastSeen===true },
+  { id:"rooted", name:"Rooted", desc:"Find a plant that refuses to sway", flavor:"It chose to stay.", test:s=>s.rootedSeen===true }
+];
+
+const milestones = [
+  { threshold: 5, text: "It starts small." },
+  { threshold: 10, text: "More appear over time." },
+  { threshold: 25, text: "The quiet changes." },
+  { threshold: 50, text: "You notice absences eventually." },
+  { threshold: 75, text: "The jar keeps living." },
+  { threshold: 100, text: "You rebuilt this before." },
+  { threshold: 125, text: "It still feels temporary." },
+  { threshold: 150, text: "Some things keep going. Others do not." }
+];
+
+const prestigeMessages = [
+  "The jar clears.",
+  "You begin again.",
+  "A different colony forms.",
+  "The water settles.",
+  "You know where everything goes now.",
+  "The rebuild gets easier.",
+  "You stop naming them.",
+  "Some things keep going. Others do not.",
+  "You remember less each cycle.",
+  "The routine becomes comforting.",
+  "You prestige sooner now.",
+  "You barely look before resetting.",
+  "The multiplier matters more.",
+  "The colony grows automatically.",
+  "You already know the outcome.",
+  "The jar exists to be emptied.",
+  "Attachment slows progression.",
+  "You optimize around loss.",
+  "The reset button feels lighter.",
+  "You stopped waiting to care.",
+  "The colony is mostly numbers now.",
+  "You no longer remember the first jar.",
+  "Continuation replaces meaning.",
+  "You click reset automatically.",
+  "The cycle continues."
+];
+
+let state = {
+  eventActive:false,
+  activeEventType:null,
+  eventEndsAt:0,
+  oscarStart:0,
+  lastEventTime:0,
+  lastClickTime:Date.now(),
+  stillnessSeen:false,
+  watcherSeen:false,
+  gapSeen:false,
+  oscarSeen:false,
+  blastSeen:false,
+  rootedSeen:false,
+  coins: 0,
+  shrimp: 1,
+  shells: 0,
+  prestige: 0,
+  mutantCount: 0,
+  totalShrimpEver: 1,
+  substrateStyle: "black",
+  backgroundStyle: "purple",
+  plantSlots: [],
+  plantPool: [],
+  plantSeed: 0,
+  velvetSeen: false,
+  mythicalSeen: false,
+  list: [],
+  mutationsSeen: 0,
+  achievements: [],
+  triggeredMilestones: [],
+  breedProgress: 0,
+  lastSavedAt: Date.now(),
+  hiddenAt: null,
+  flash: 0,
+  prestigePulse: 0,
+  lastFrameTime: 0,
+  saveTimer: 0
+};
+
+let currentStatusTimeout = 0;
+let currentStatusShowing = false;
+let statusQueue = [];
+let achievementsDirty = true;
+
+let cachedBuyMaxCount = 0;
+let cachedBuyMaxCoins = -1;
+let cachedBuyMaxShrimp = -1;
+
+function invalidateBuyMaxCache(){
+  cachedBuyMaxCount = 0;
+  cachedBuyMaxCoins = -1;
+  cachedBuyMaxShrimp = -1;
+}
+
+function saveGame(){
+  state.lastSavedAt = Date.now();
+
+  const data = {
+    coins: state.coins,
+    shrimp: state.shrimp,
+    shells: state.shells,
+    prestige: state.prestige,
+    mutantCount: state.mutantCount,
+    totalShrimpEver: state.totalShrimpEver,
+    substrateStyle: state.substrateStyle,
+    backgroundStyle: state.backgroundStyle,
+    plantSlots: state.plantSlots,
+    plantPool: state.plantPool,
+    plantSeed: state.plantSeed,
+    velvetSeen: state.velvetSeen,
+    mythicalSeen: state.mythicalSeen,
+    stillnessSeen: state.stillnessSeen,
+    watcherSeen: state.watcherSeen,
+    gapSeen: state.gapSeen,
+    oscarSeen: state.oscarSeen,
+    blastSeen: state.blastSeen,
+    rootedSeen: state.rootedSeen,
+    list: state.list,
+    mutationsSeen: state.mutationsSeen,
+    achievements: state.achievements,
+    triggeredMilestones: state.triggeredMilestones,
+    breedProgress: state.breedProgress,
+    lastSavedAt: state.lastSavedAt,
+    hiddenAt: state.hiddenAt
+  };
+  writeSaveData(SAVE_KEY, JSON.stringify(data));
+}
+
+function loadGame(){
+  const raw = readSaveData(SAVE_KEY);
+  if(!raw) return;
+  try{
+    const data = JSON.parse(raw);
+    state = { ...state, ...data };
+
+    if(typeof state.lastFrameTime !== "number") state.lastFrameTime = 0;
+    if(typeof state.saveTimer !== "number") state.saveTimer = 0;
+    if(typeof state.mutantCount !== "number") state.mutantCount = 0;
+    if(typeof state.totalShrimpEver !== "number") state.totalShrimpEver = Math.max(1, state.shrimp || 1);
+    if(!state.substrateStyle) state.substrateStyle = "black";
+    if(!state.backgroundStyle) state.backgroundStyle = "purple";
+    if(!Array.isArray(state.plantSlots)) state.plantSlots = [];
+    if(!Array.isArray(state.plantPool)) state.plantPool = [];
+    if(typeof state.plantSeed !== "number") state.plantSeed = 0;
+    if(typeof state.velvetSeen !== "boolean") state.velvetSeen = false;
+    if(typeof state.mythicalSeen !== "boolean") state.mythicalSeen = false;
+    if(typeof state.stillnessSeen !== "boolean") state.stillnessSeen = false;
+    if(typeof state.watcherSeen !== "boolean") state.watcherSeen = false;
+    if(typeof state.gapSeen !== "boolean") state.gapSeen = false;
+    if(typeof state.oscarSeen !== "boolean") state.oscarSeen = false;
+    if(typeof state.blastSeen !== "boolean") state.blastSeen = false;
+    if(typeof state.rootedSeen !== "boolean") state.rootedSeen = false;
+    if(typeof state.activeEventType !== "string") state.activeEventType = null;
+    if(typeof state.eventEndsAt !== "number") state.eventEndsAt = 0;
+    if(typeof state.oscarStart !== "number") state.oscarStart = 0;
+    if(typeof state.prestigePulse !== "number") state.prestigePulse = 0;
+    if(typeof state.breedProgress !== "number") state.breedProgress = 0;
+    if(typeof state.lastSavedAt !== "number") state.lastSavedAt = Date.now();
+    if(typeof state.hiddenAt !== "number" && state.hiddenAt !== null) state.hiddenAt = null;
+    if(!Array.isArray(state.list)) state.list = [];
+    if(!Array.isArray(state.achievements)) state.achievements = [];
+    if(!Array.isArray(state.triggeredMilestones)) state.triggeredMilestones = [];
+
+    const visibleMutants = state.list.filter(s => s && s.mutant).length;
+    if(state.mutantCount < visibleMutants) state.mutantCount = visibleMutants;
+    if(state.mutantCount > state.shrimp) state.mutantCount = state.shrimp;
+  } catch(e){
+    console.error("Load failed:", e);
+  }
+}
+if(!state.plantSeed) state.plantSeed = Math.floor(Math.random() * 999999999);
+loadGame();
+if(!state.plantSeed) state.plantSeed = Math.floor(Math.random() * 999999999);
+if(!Array.isArray(state.plantPool) || state.plantPool.length === 0) buildPlantPool();
+
+function formatNumber(n){
+  if(n >= 1000000) return (n / 1000000).toFixed(2).replace(/\.00$/, "") + "M";
+  if(n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  return Math.floor(n).toString();
+}
+
+function shrimpCostForCount(count){
+  return Math.floor(8 * Math.pow(1.085, count - 1));
+}
+
+function shrimpCost(){
+  return shrimpCostForCount(state.shrimp);
+}
+
+function prestigeCost(){
+  if(state.prestige <= 20){
+    return Math.floor(250 * Math.pow(1.75, state.prestige));
+  }
+
+  const costAt20 = 250 * Math.pow(1.75, 20);
+  return Math.floor(costAt20 * Math.pow(1.67, state.prestige - 20));
+}
+
+function totalCostForNextShrimp(amount){
+  let total = 0;
+  let tempShrimp = state.shrimp;
+  for(let i = 0; i < amount; i++){
+    total += shrimpCostForCount(tempShrimp);
+    tempShrimp++;
+  }
+  return total;
+}
+
+function affordableShrimpCount(){
+  let total = 0;
+  let count = 0;
+  let tempShrimp = state.shrimp;
+  const coins = state.coins;
+
+  while(true){
+    const cost = shrimpCostForCount(tempShrimp);
+    if(total + cost > coins) break;
+    total += cost;
+    tempShrimp++;
+    count++;
+    if(count >= 10000) break;
+  }
+
+  return count;
+}
+
+function getCachedBuyMaxCount(){
+  const flooredCoins = Math.floor(state.coins);
+  if(cachedBuyMaxCoins !== flooredCoins || cachedBuyMaxShrimp !== state.shrimp){
+    cachedBuyMaxCoins = flooredCoins;
+    cachedBuyMaxShrimp = state.shrimp;
+    cachedBuyMaxCount = affordableShrimpCount();
+  }
+  return cachedBuyMaxCount;
+}
+
+function incomePerSecond(){
+  const normalCount = Math.max(0, state.shrimp - state.mutantCount);
+  const totalValue = normalCount + state.mutantCount * 3;
+  return (totalValue + 1) * (1 + state.shells * 0.45);
+}
+
+function mutationChance(){
+  return 0.01 + state.prestige * 0.005;
+}
+
+function currentVariant(){
+  if(state.prestige >= shrimpVariants.length){
+    return null;
+  }
+  return shrimpVariants[state.prestige];
+}
+
+function currentShrimpType(){
+  const v = currentVariant();
+  return v ? v.name : "Chaos Morph";
+}
+
+function currentPrestigeMessage(){
+  const idx = Math.max(0, Math.min(state.prestige - 1, prestigeMessages.length - 1));
+  return prestigeMessages[idx];
+}
+
+function getSubstrateStyle(){
+  return substrates.find(s => s.id === state.substrateStyle) || substrates[0];
+}
+
+function getBackgroundStyle(){
+  return backgrounds.find(b => b.id === state.backgroundStyle) || backgrounds[1];
+}
+
+function updatePageBackground(){
+  const b = getBackgroundStyle();
+  document.body.style.background = `linear-gradient(180deg,${b.top} 0%,${b.mid} 55%,${b.bottom} 100%)`;
+}
+
+function randomFrom(list){
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function randomizeJarStyle(){
+  const currentSubstrate = state.substrateStyle;
+  const currentBackground = state.backgroundStyle;
+
+  let nextSubstrate = randomFrom(substrates).id;
+  let nextBackground = randomFrom(backgrounds).id;
+
+  if(substrates.length > 1){
+    while(nextSubstrate === currentSubstrate){
+      nextSubstrate = randomFrom(substrates).id;
+    }
+  }
+
+  if(backgrounds.length > 1){
+    while(nextBackground === currentBackground){
+      nextBackground = randomFrom(backgrounds).id;
+    }
+  }
+
+  state.substrateStyle = nextSubstrate;
+  state.backgroundStyle = nextBackground;
+  updatePageBackground();
+}
+
+function currentJarStyleName(){
+  const sub = getSubstrateStyle();
+  const bg = getBackgroundStyle();
+  return `${sub.name} / ${bg.name}`;
+}
+
+function renderStyleChoices(){
+  substrateChoicesEl.replaceChildren();
+  backgroundChoicesEl.replaceChildren();
+
+  for(const s of substrates){
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "styleChoice" + (pendingStyle.substrate === s.id ? " selected" : "");
+    btn.addEventListener("pointerdown", (e) => { e.preventDefault(); chooseSubstrateStyle(s.id); });
+
+    const swatch = document.createElement("div");
+    swatch.className = "swatch";
+    swatch.style.background = `linear-gradient(135deg,${s.colors[0]},${s.colors[1]},${s.colors[2]})`;
+
+    const label = document.createElement("strong");
+    label.textContent = s.name;
+
+    btn.append(swatch, label);
+    substrateChoicesEl.appendChild(btn);
+  }
+
+  for(const b of backgrounds){
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "styleChoice" + (pendingStyle.background === b.id ? " selected" : "");
+    btn.addEventListener("pointerdown", (e) => { e.preventDefault(); chooseBackgroundStyle(b.id); });
+
+    const swatch = document.createElement("div");
+    swatch.className = "swatch";
+    swatch.style.background = `linear-gradient(180deg,${b.top},${b.mid},${b.bottom})`;
+
+    const label = document.createElement("strong");
+    label.textContent = b.name;
+
+    btn.append(swatch, label);
+    backgroundChoicesEl.appendChild(btn);
+  }
+}
+
+
+function chooseSubstrateStyle(id){
+  pendingStyle.substrate = id;
+  renderStyleChoices();
+}
+
+function chooseBackgroundStyle(id){
+  pendingStyle.background = id;
+  renderStyleChoices();
+}
+
+function showStyleOverlay(){
+  pendingStyle = {
+    substrate: state.substrateStyle || "black",
+    background: state.backgroundStyle || "purple"
+  };
+  renderStyleChoices();
+  styleOverlay.style.display = "flex";
+  requestAnimationFrame(() => styleOverlay.classList.add("show"));
+}
+
+function hideStyleOverlay(){
+  styleOverlay.classList.remove("show");
+  setTimeout(() => {
+    styleOverlay.style.display = "none";
+  }, 350);
+}
+
+function applyStyleChoice(){
+  state.substrateStyle = pendingStyle.substrate || state.substrateStyle || "black";
+  state.backgroundStyle = pendingStyle.background || state.backgroundStyle || "purple";
+  updatePageBackground();
+  hideStyleOverlay();
+  saveGame();
+}
+
+function titleSafeColor(color){
+  const {r, g, b} = colorToRgb(color);
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luminance < 0.35 ? lighten(color, 0.58) : color;
+}
+
+function currentTitleColor(t){
+  if(state.prestige >= shrimpVariants.length){
+    return titleSafeColor(shrimpVariants[Math.floor(t / 300) % shrimpVariants.length].color);
+  }
+  return titleSafeColor(currentVariant().color);
+}
+
+function enqueueStatus(text, duration = 4500, delay = 400){
+  if(!text) return;
+  statusQueue.push({
+    text,
+    duration,
+    delay,
+    createdAt: performance.now()
+  });
+}
+
+function showStatus(text, duration = 4500, delay = 400){
+  enqueueStatus(text, duration, delay);
+}
+
+function updateStatusText(now){
+  if(currentStatusShowing && currentStatusTimeout && now > currentStatusTimeout){
+    statusTextEl.style.opacity = "0";
+    currentStatusShowing = false;
+    currentStatusTimeout = 0;
+  }
+
+  if(!currentStatusShowing && statusQueue.length > 0){
+    const next = statusQueue[0];
+    if(now - next.createdAt >= next.delay){
+      statusQueue.shift();
+      statusTextEl.textContent = next.text;
+      statusTextEl.style.opacity = "1";
+      currentStatusShowing = true;
+      currentStatusTimeout = now + next.duration;
+    }
+  }
+}
+
+function formatAwayTime(seconds){
+  const totalMinutes = Math.floor(seconds / 60);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+
+  const parts = [];
+  if(days > 0) parts.push(`${days}d`);
+  if(hours > 0) parts.push(`${hours}h`);
+  if(minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+  return parts.join(" ");
+}
+
+function applyOfflineProgress(){
+  const now = Date.now();
+  const savedAt = Number.isFinite(state.lastSavedAt) ? state.lastSavedAt : now;
+  const hiddenAt = Number.isFinite(state.hiddenAt) ? state.hiddenAt : null;
+  const startAt = hiddenAt ? Math.min(savedAt, hiddenAt) : savedAt;
+  const elapsedMs = Math.max(0, now - startAt);
+  const offlineSeconds = Math.min(MAX_OFFLINE_SECONDS, elapsedMs / 1000);
+
+  if(offlineSeconds < 5){
+    state.hiddenAt = null;
+    return;
+  }
+
+  const earned = incomePerSecond() * offlineSeconds;
+  state.coins += earned;
+  state.hiddenAt = null;
+  invalidateBuyMaxCache();
+  showStatus(`Away ${formatAwayTime(offlineSeconds)} • +${formatNumber(earned)} coins`, 6500, 700);
+  saveGame();
+}
+
+function checkMilestones(){
+  for(const m of milestones){
+    if(state.shrimp >= m.threshold && !state.triggeredMilestones.includes(m.threshold)){
+      state.triggeredMilestones.push(m.threshold);
+      showStatus(m.text, 5200, 400);
+    }
+  }
+}
+
+function passiveBreed(dtSec){
+  state.breedProgress += state.shrimp * BREED_RATE_PER_SHRIMP * dtSec;
+
+  let births = 0;
+  while(state.breedProgress >= 1 && births < 500){
+    addSingleShrimp();
+    state.breedProgress -= 1;
+    births++;
+  }
+
+  if(births > 0){
+    syncShrimp();
+    unlockAchievements();
+    invalidateBuyMaxCache();
+  }
+}
+
+function jar(){
+  const usableHeight = canvasHeight();
+  const w = Math.min(window.innerWidth * 0.78, 430);
+  const h = Math.min(usableHeight * 0.72, 340);
+  return {
+    x: window.innerWidth / 2,
+    y: usableHeight / 2 + 18,
+    w,
+    h
+  };
+}
+
+function randomVariantIndex(){
+  return Math.floor(Math.random() * shrimpVariants.length);
+}
+
+function currentVariantIndex(){
+  if(state.prestige >= shrimpVariants.length){
+    return randomVariantIndex();
+  }
+  return state.prestige;
+}
+
+function newShrimpVisual(mutantOverride){
+  const j = jar();
+  const mutant = typeof mutantOverride === "boolean" ? mutantOverride : (Math.random() < mutationChance());
+  if(mutant && typeof mutantOverride !== "boolean"){
+    state.mutantCount++;
+    state.mutationsSeen++;
+  }
+
+  const marginX = 42;
+  const marginY = 72;
+
+  return {
+    x: j.x - j.w/2 + marginX + Math.random() * Math.max(1, j.w - marginX * 2),
+    y: j.y - j.h/2 + marginY + Math.random() * Math.max(1, j.h - marginY - 58),
+    vx: (Math.random() - 0.5) * 0.55 || 0.2,
+    vy: (Math.random() - 0.5) * 0.22,
+    bob: Math.random() * Math.PI * 2,
+    mutant,
+    variantIndex: currentVariantIndex(),
+    scale: 0.9 + Math.random() * 0.18
+  };
+}
+
+function syncShrimp(){
+  const visible = Math.min(state.shrimp, 80);
+
+  if(!Array.isArray(state.list)){
+    state.list = [];
+  }
+
+  state.list = state.list.filter(s =>
+    s &&
+    Number.isFinite(s.x) &&
+    Number.isFinite(s.y) &&
+    Number.isFinite(s.vx) &&
+    Number.isFinite(s.vy)
+  );
+
+  while(state.list.length < visible){
+    state.list.push(newShrimpVisual(false));
+  }
+
+  while(state.list.length > visible){
+    state.list.pop();
+  }
+
+  // Repair missing visual fields from older saves.
+  for(const s of state.list){
+    if(typeof s.bob !== "number") s.bob = Math.random() * Math.PI * 2;
+    if(typeof s.scale !== "number") s.scale = 0.9 + Math.random() * 0.18;
+    if(typeof s.variantIndex !== "number") s.variantIndex = currentVariantIndex();
+    if(typeof s.mutant !== "boolean") s.mutant = false;
+  }
+}
+
+function addSingleShrimp(){
+  const mutant = Math.random() < mutationChance();
+  if(mutant){
+    state.mutantCount++;
+    state.mutationsSeen++;
+    showStatus("irregularity detected", 2600, 220);
+  }
+
+  state.shrimp++;
+  state.totalShrimpEver++;
+
+  if(state.list.length < 80){
+    const visual = newShrimpVisual(mutant);
+
+    // Blast from the Past: 1/1000 on purchased/spawned shrimp, only after a few cycles.
+    if(state.prestige >= 3 && !state.blastSeen && Math.random() < 0.001){
+      const pastMax = Math.max(0, currentVariantIndex() - 1);
+      visual.variantIndex = Math.floor(Math.random() * Math.max(1, pastMax + 1));
+      visual.blast = true;
+      state.blastSeen = true;
+      showStatus("Blast from the Past: You recognize this one.", 5200, 0);
+    }
+
+    state.list.push(visual);
+  }
+}
+
+function buyAmount(amount){
+  if(amount <= 0) return;
+
+  let bought = 0;
+  for(let i = 0; i < amount; i++){
+    const c = shrimpCost();
+    if(state.coins < c) break;
+    state.coins -= c;
+    addSingleShrimp();
+    bought++;
+  }
+
+  if(bought > 0){
+    syncShrimp();
+    unlockAchievements();
+    invalidateBuyMaxCache();
+    saveGame();
+  }
+}
+
+function buyShrimp(){
+  buyAmount(1);
+}
+
+function buyTen(){
+  buyAmount(10);
+}
+
+function buyMax(){
+  const amount = getCachedBuyMaxCount();
+  if(amount > 0){
+    buyAmount(amount);
+  }
+}
+
+function doPrestige(){
+  const c = prestigeCost();
+  if(state.coins < c) return;
+
+  state.shells++;
+  state.prestige++;
+  state.coins = 0;
+  state.shrimp = 1;
+  state.mutantCount = 0;
+  state.breedProgress = 0;
+  state.triggeredMilestones = [];
+  state.list = [];
+  state.plantSlots = [];
+  state.plantPool = [];
+  state.plantSeed = Math.floor(Math.random() * 999999999);
+  state.eventActive = false;
+  state.activeEventType = null;
+  state.eventEndsAt = 0;
+  buildPlantPool();
+  state.flash = 1.2;
+  state.prestigePulse = 1;
+
+  syncShrimp();
+  unlockAchievements();
+  randomizeJarStyle();
+  showStatus(currentPrestigeMessage(), 5200, 500);
+  showStatus(`New jar: ${currentJarStyleName()}`, 4200, 1100);
+  invalidateBuyMaxCache();
+  saveGame();
+}
+
+function bindFastButton(button, handler){
+  button.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    state.lastClickTime = Date.now();
+    handler();
+  });
+}
+
+bindFastButton(buyBtn, buyShrimp);
+bindFastButton(buy10Btn, buyTen);
+bindFastButton(buyMaxBtn, buyMax);
+bindFastButton(prestigeBtn, doPrestige);
+bindFastButton(applyStyleBtn, applyStyleChoice);
+
+achBtn.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  achPanel.style.display = achPanel.style.display === "block" ? "none" : "block";
+  if(achievementsDirty){
+    renderAchievements();
+  }
+});
+
+function unlockAchievements(){
+  let changed = false;
+
+  for(const a of achievements){
+    if(a.test(state) && !state.achievements.includes(a.id)){
+      state.achievements.push(a.id);
+      changed = true;
+      showStatus(`${a.name}: ${a.flavor || a.desc || "Unlocked."}`, 4200, 0);
+    }
+  }
+
+  if(changed){
+    achievementsDirty = true;
+  }
+}
+
+
+function renderAchievements(){
+  achPanel.innerHTML =
+    `<div class="title">Achievements</div>` +
+    achievements.map(a => {
+      const unlocked = state.achievements.includes(a.id);
+      return `
+        <div class="${unlocked ? "achievementItem" : "achievementItem locked"}">
+          <div class="achievementName">${unlocked ? "✓" : "○"} ${a.name}</div>
+          <div class="achievementDesc">${a.desc || ""}</div>
+          <div class="achievementFlavor">${a.flavor || ""}</div>
+        </div>
+      `;
+    }).join("");
+
+  achievementsDirty = false;
+}
+
+
+function drawBackground(){
+  const usableHeight = canvasHeight();
+  ctx.clearRect(0, 0, window.innerWidth, usableHeight);
+
+  const b = getBackgroundStyle();
+  const bg = ctx.createLinearGradient(0, 0, 0, usableHeight);
+  bg.addColorStop(0, b.top);
+  bg.addColorStop(0.55, b.mid);
+  bg.addColorStop(1, b.bottom);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, window.innerWidth, usableHeight);
+
+  const glow = ctx.createRadialGradient(window.innerWidth/2, usableHeight*0.35, 20, window.innerWidth/2, usableHeight*0.35, usableHeight*0.72);
+  glow.addColorStop(0, "rgba(120,190,210,.10)");
+  glow.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, window.innerWidth, usableHeight);
+
+  for(let i = 0; i < 8; i++){
+    ctx.fillStyle = "rgba(255,255,255,.014)";
+    ctx.fillRect(i * (window.innerWidth / 7), 0, 14, usableHeight);
+  }
+
+  if(state.prestige >= shrimpVariants.length){
+    ctx.fillStyle = "rgba(140,90,255,.08)";
+    ctx.fillRect(0, 0, window.innerWidth, usableHeight);
+  }
+
+  for(let i = 0; i < 24; i++){
+    ctx.fillStyle = "rgba(255,255,255,.022)";
+    const px = (i * 131) % Math.max(1, window.innerWidth);
+    const py = (i * 59) % Math.max(1, usableHeight);
+    ctx.fillRect(px, py, 2, 2);
+  }
+}
+
+function roundedJarPath(j){
+  const left = j.x - j.w/2;
+  const top = j.y - j.h/2;
+  const right = j.x + j.w/2;
+  const bottom = j.y + j.h/2;
+  const shoulder = Math.min(42, j.w * 0.12);
+  const r = Math.min(30, j.w * 0.08);
+
+  ctx.beginPath();
+  ctx.moveTo(left + shoulder, top + 28);
+  ctx.quadraticCurveTo(left + 6, top + 28, left + 6, top + shoulder + 18);
+  ctx.lineTo(left + 6, bottom - r);
+  ctx.quadraticCurveTo(left + 6, bottom - 4, left + r + 4, bottom - 4);
+  ctx.lineTo(right - r - 4, bottom - 4);
+  ctx.quadraticCurveTo(right - 6, bottom - 4, right - 6, bottom - r);
+  ctx.lineTo(right - 6, top + shoulder + 18);
+  ctx.quadraticCurveTo(right - 6, top + 28, right - shoulder, top + 28);
+  ctx.lineTo(left + shoulder, top + 28);
+}
+
+function drawSubstrateLayer(j){
+  const s = getSubstrateStyle();
+  const left = j.x - j.w/2 + 16;
+  const right = j.x + j.w/2 - 16;
+  const bottom = j.y + j.h/2 - 10;
+  const top = bottom - 42;
+
+  const grd = ctx.createLinearGradient(0, top, 0, bottom);
+  grd.addColorStop(0, s.colors[1]);
+  grd.addColorStop(0.36, s.colors[0]);
+  grd.addColorStop(0.72, s.colors[2]);
+  grd.addColorStop(1, "rgba(0,0,0,.55)");
+  ctx.fillStyle = grd;
+
+  ctx.beginPath();
+  ctx.moveTo(left, bottom - 2);
+
+  for(let i = 0; i <= 28; i++){
+    const t = i / 28;
+    const x = left + (right - left) * t;
+    const curve = Math.sin(t * Math.PI) * 8;
+    ctx.lineTo(x, bottom - curve);
+  }
+
+  for(let i = 28; i >= 0; i--){
+    const t = i / 28;
+    const x = left + (right - left) * t;
+    const wobble = Math.sin(x * 0.035 + state.prestige) * 3 + Math.sin(x * .071) * 1.3;
+    ctx.lineTo(x, top + wobble);
+  }
+
+  ctx.closePath();
+  ctx.fill();
+
+  // compressed darker base layer
+  ctx.fillStyle = "rgba(0,0,0,.18)";
+  ctx.beginPath();
+  ctx.ellipse(j.x, bottom - 3, (right-left)/2, 8, 0, 0, Math.PI);
+  ctx.fill();
+
+  // grain field
+  for(let i = 0; i < 140; i++){
+    const t = ((i * 37) % 100) / 100;
+    const x = left + (right - left) * t;
+    const curve = Math.sin(t * Math.PI) * 8;
+    const yMin = top + 7 + Math.sin(x * 0.035 + state.prestige) * 2;
+    const yMax = bottom - curve - 2;
+    const y = yMin + ((i * 19) % Math.max(4, yMax - yMin));
+    ctx.fillStyle = s.specks[i % s.specks.length];
+    ctx.globalAlpha = 0.26 + (i % 5) * 0.10;
+    ctx.beginPath();
+    ctx.arc(x, y, 0.8 + (i % 4) * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // sparse pebbles
+  for(let i = 0; i < 22; i++){
+    const t = ((i * 53) % 100) / 100;
+    const x = left + (right - left) * t;
+    const curve = Math.sin(t * Math.PI) * 8;
+    const y = top + 15 + ((i * 29) % Math.max(5, bottom - curve - top - 20));
+    const r = 1.5 + (i % 4) * .7;
+    ctx.globalAlpha = .42;
+    ctx.fillStyle = i % 3 === 0 ? s.colors[1] : (i % 3 === 1 ? s.colors[0] : s.colors[2]);
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * 1.25, r, (i % 5) * .4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // detritus freckles
+  for(let i = 0; i < 36; i++){
+    const t = ((i * 71) % 100) / 100;
+    const x = left + (right - left) * t;
+    const y = top + 5 + ((i * 17) % 34);
+    ctx.fillStyle = "rgba(18,12,8,.28)";
+    ctx.globalAlpha = .45;
+    ctx.fillRect(x, y, 1 + (i % 2), 1);
+  }
+
+  ctx.globalAlpha = 1;
+}
+
+
+function drawJar(){
+  const j = jar();
+  const left = j.x - j.w/2;
+  const top = j.y - j.h/2;
+  const right = j.x + j.w/2;
+  const bottom = j.y + j.h/2;
+
+  ctx.save();
+
+  // Cork lid, drawn with simple rectangles/ellipses so mobile Safari doesn't throw a tantrum.
+  const corkW = j.w * 0.76;
+  const corkH = 28;
+  const corkX = j.x - corkW/2;
+  const corkY = top + 2;
+
+  const corkGrad = ctx.createLinearGradient(0, corkY, 0, corkY + corkH);
+  corkGrad.addColorStop(0, "#9b7146");
+  corkGrad.addColorStop(0.55, "#6f4b2d");
+  corkGrad.addColorStop(1, "#3f2a1a");
+  ctx.fillStyle = corkGrad;
+  ctx.fillRect(corkX + 8, corkY, corkW - 16, corkH);
+  ctx.beginPath();
+  ctx.ellipse(corkX + 8, corkY + corkH/2, 8, corkH/2, 0, Math.PI/2, Math.PI*1.5);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(corkX + corkW - 8, corkY + corkH/2, 8, corkH/2, 0, -Math.PI/2, Math.PI/2);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(245,213,163,.35)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(corkX + 8, corkY + 2, corkW - 16, corkH - 4);
+
+  for(let i = 0; i < 22; i++){
+    const gx = corkX + 14 + ((i * 23) % Math.max(1, corkW - 28));
+    const gy = corkY + 7 + ((i * 11) % Math.max(1, corkH - 12));
+    ctx.fillStyle = i % 3 === 0 ? "rgba(40,24,12,.35)" : "rgba(230,180,120,.18)";
+    ctx.beginPath();
+    ctx.arc(gx, gy, 1 + (i % 2), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Jar body path
+  function jarPath(){
+    const shoulder = Math.min(42, j.w * 0.12);
+    const r = Math.min(30, j.w * 0.08);
+    ctx.beginPath();
+    ctx.moveTo(left + shoulder, top + 34);
+    ctx.quadraticCurveTo(left + 6, top + 34, left + 6, top + shoulder + 24);
+    ctx.lineTo(left + 6, bottom - r);
+    ctx.quadraticCurveTo(left + 6, bottom - 5, left + r + 4, bottom - 5);
+    ctx.lineTo(right - r - 4, bottom - 5);
+    ctx.quadraticCurveTo(right - 6, bottom - 5, right - 6, bottom - r);
+    ctx.lineTo(right - 6, top + shoulder + 24);
+    ctx.quadraticCurveTo(right - 6, top + 34, right - shoulder, top + 34);
+    ctx.lineTo(left + shoulder, top + 34);
+    ctx.closePath();
+  }
+
+  jarPath();
+
+  const water = ctx.createLinearGradient(0, top, 0, bottom);
+  water.addColorStop(0, "rgba(31,82,113,.22)");
+  water.addColorStop(0.22, "rgba(18,61,91,.68)");
+  water.addColorStop(1, "rgba(8,28,42,.88)");
+  ctx.fillStyle = water;
+  ctx.fill();
+
+  const sideShade = ctx.createLinearGradient(left, 0, right, 0);
+  sideShade.addColorStop(0, "rgba(0,0,0,.30)");
+  sideShade.addColorStop(0.14, "rgba(255,255,255,.06)");
+  sideShade.addColorStop(0.50, "rgba(255,255,255,.02)");
+  sideShade.addColorStop(0.86, "rgba(255,255,255,.06)");
+  sideShade.addColorStop(1, "rgba(0,0,0,.30)");
+  ctx.fillStyle = sideShade;
+  ctx.fill();
+
+  // Waterline
+  ctx.strokeStyle = "rgba(216,245,255,.34)";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.ellipse(j.x, top + 66, j.w/2 - 18, 5.5, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  drawSubstrateLayer(j);
+
+  // Glass outline
+  ctx.strokeStyle = "rgba(157,211,255,.62)";
+  ctx.lineWidth = 3;
+  jarPath();
+  ctx.stroke();
+
+  // Side highlights
+  ctx.strokeStyle = "rgba(255,255,255,.15)";
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(left + 24, top + 72);
+  ctx.lineTo(left + 24, bottom - 42);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(255,255,255,.08)";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(right - 22, top + 76);
+  ctx.lineTo(right - 22, bottom - 46);
+  ctx.stroke();
+
+  // Front glass lip over cork
+  ctx.strokeStyle = "rgba(215,245,255,.48)";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.ellipse(j.x, top + 35, j.w/2 - 9, 13, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(255,255,255,.22)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(j.x, top + 28, j.w/2 - 15, 8, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Bubbles
+  for(let i = 0; i < 7; i++){
+    const t = performance.now() * 0.02;
+    const bx = j.x + j.w * 0.28 + Math.sin(i * 1.4 + t / 26) * (8 + i);
+    const by = bottom - 18 - ((t + i * 42) % Math.max(24, j.h - 92));
+    const radius = 1.8 + ((i % 3) * 0.9);
+    ctx.strokeStyle = `rgba(220,240,255,${0.26 + i * 0.035})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(bx, by, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawLeaf(x, y, len, angle, color){
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(0, -len / 2, len * 0.16, len * 0.52, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function plantPhase(){
+  let phase = 0;
+  if(state.shrimp >= 2) phase = 1;
+  if(state.shrimp >= 4) phase = 2;
+  if(state.shrimp >= 6) phase = 3;
+  if(state.shrimp >= 8) phase = 4;
+  if(state.shrimp >= 12) phase = 5;
+  if(state.shrimp >= 16) phase = 6;
+  if(state.shrimp >= 22) phase = 7;
+  if(state.shrimp >= 30) phase = 8;
+  if(state.shrimp >= 42) phase = 9;
+  if(state.shrimp >= 56) phase = 10;
+  return phase;
+}
+
+const plantRoster = [
+  {id:"bacopa", role:"mid"},
+  {id:"hairgrass", role:"background"},
+  {id:"javaFern", role:"large"},
+  {id:"amazonSword", role:"large"},
+  {id:"crypt", role:"mid"},
+  {id:"javaMoss", role:"low"},
+  {id:"ludwigia", role:"accent"},
+  {id:"rotala", role:"accent"},
+  {id:"purpleVelvet", role:"accent"}
+];
+
+function seededRand(seed){
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function mulberry32(seed){
+  return function(){
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleWithSeed(arr, seed){
+  const rng = mulberry32(seed || 1);
+  const a = [...arr];
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildPlantPool(){
+  if(!state.plantSeed) state.plantSeed = Math.floor(Math.random() * 999999999);
+
+  const basePool = [
+    "bacopa",
+    "crypt",
+    "javaFern",
+    "amazonSword",
+    "javaMoss",
+    "ludwigia",
+    "rotala",
+    "hairgrass",
+    "anubias"
+  ];
+
+  const rng = mulberry32(state.plantSeed + 707);
+  let pool = shuffleWithSeed(basePool, state.plantSeed);
+
+  // 11% velvet bacopa chance per run/prestige. Rare, not invisible. Revolutionary restraint.
+  if(rng() < 0.11){
+    pool.splice(Math.min(3, pool.length), 0, "purpleVelvet");
+    state.velvetSeen = true;
+  }
+
+  // Make sure the first plant is not always grass. Grass can still happen, but not as a cursed default.
+  if(pool[0] === "hairgrass"){
+    const swapIndex = pool.findIndex(p => p !== "hairgrass");
+    if(swapIndex > 0){
+      [pool[0], pool[swapIndex]] = [pool[swapIndex], pool[0]];
+    }
+  }
+
+  state.plantPool = pool;
+}
+
+function choosePlantType(slot){
+  if(!Array.isArray(state.plantPool) || state.plantPool.length === 0){
+    buildPlantPool();
+  }
+  return state.plantPool[slot % state.plantPool.length];
+}
+
+function plantRoleForType(type, fallback){
+  if(type === "hairgrass") return "background";
+  if(type === "amazonSword" || type === "javaFern") return "large";
+  if(type === "javaMoss") return "low";
+  if(type === "ludwigia" || type === "rotala" || type === "purpleVelvet") return "accent";
+  return fallback || "mid";
+}
+
+function ensurePlantSlots(){
+  const phase = plantPhase();
+  if(!Array.isArray(state.plantSlots)) state.plantSlots = [];
+  if(!Array.isArray(state.plantPool) || state.plantPool.length === 0) buildPlantPool();
+
+  const j = jar();
+  const left = j.x - j.w/2 + 44;
+  const right = j.x + j.w/2 - 44;
+  const target = phase <= 0 ? 0 : Math.min(10, phase);
+
+  while(state.plantSlots.length < target){
+    const i = state.plantSlots.length;
+    const seedBase = state.plantSeed + i * 997 + state.prestige * 43;
+    const type = choosePlantType(i);
+    const role = plantRoleForType(type, ["mid","large","low","accent","background"][i % 5]);
+    const jitter = (seededRand(seedBase + 21) - 0.5) * 0.11;
+    const t = Math.min(.96, Math.max(.04, ((i + .55) / 10) + jitter));
+    const x = left + (right - left) * t;
+
+    state.plantSlots.push({
+      id: "p" + state.prestige + "_" + i,
+      type,
+      role,
+      xRatio: (x - left) / Math.max(1, right - left),
+      lean: ((seededRand(seedBase + 44) - .5) * 18),
+      heightSeed: seededRand(seedBase + 83),
+      colorSeed: seededRand(seedBase + 31),
+      rooted: seededRand(seedBase + 909) < 0.08
+    });
+    if(state.plantSlots[state.plantSlots.length - 1].rooted) state.rootedSeen = true;
+  }
+}
+
+
+function plantStage(slotIndex){
+  const phase = plantPhase();
+  if(phase <= slotIndex) return 0;
+  const extra = phase - slotIndex;
+  if(extra >= 7) return 3;
+  if(extra >= 4) return 2;
+  if(extra >= 1) return 1;
+  return 0;
+}
+
+function drawTinyLeaf(x, y, w, h, angle, color){
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawHairgrass(x, baseY, h, lean, stage){
+  const blades = 5 + stage * 4;
+  for(let b = 0; b < blades; b++){
+    const ox = (b - blades/2) * 3.2;
+    const bh = h * (.65 + (b % 5) * .10);
+    const l = lean * .25 + (b - blades/2) * 1.4;
+    ctx.strokeStyle = b % 2 ? "#59d07a" : "#2fae5f";
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(x + ox, baseY);
+    ctx.quadraticCurveTo(x + ox + l * .4, baseY - bh * .55, x + ox + l, baseY - bh);
+    ctx.stroke();
+  }
+}
+
+function drawBacopa(x, baseY, h, lean, stage){
+  const stems = 1 + stage;
+  for(let s = 0; s < stems; s++){
+    const ox = (s - stems/2) * 6;
+    ctx.strokeStyle = "#247840";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(x + ox, baseY);
+    ctx.quadraticCurveTo(x + ox + lean * .3, baseY - h * .5, x + ox + lean, baseY - h);
+    ctx.stroke();
+    const leaves = 4 + stage * 2;
+    for(let k = 0; k < leaves; k++){
+      const t = (k + 1) / (leaves + 1);
+      const px = x + ox + lean * t;
+      const py = baseY - h * t;
+      drawTinyLeaf(px - 4, py, 3.2, 4.2, -.6, "#65d97a");
+      drawTinyLeaf(px + 4, py + 1, 3.2, 4.2, .6, "#78e08f");
+    }
+  }
+}
+
+function drawJavaFern(x, baseY, h, lean, stage){
+  const leaves = 3 + stage * 2;
+  for(let k = 0; k < leaves; k++){
+    const side = k - leaves/2;
+    const lh = h * (.72 + (k % 3) * .08);
+    ctx.strokeStyle = "#1e6b39";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, baseY);
+    ctx.quadraticCurveTo(x + side * 8 + lean * .2, baseY - lh * .45, x + side * 12 + lean, baseY - lh);
+    ctx.stroke();
+    drawTinyLeaf(x + side * 8 + lean * .35, baseY - lh * .52, 4, 14, side * .12, "#3faa5e");
+    if(stage >= 2) drawTinyLeaf(x + side * 11 + lean * .55, baseY - lh * .74, 3.5, 11, side * .12, "#59c875");
+  }
+}
+
+function drawAmazonSword(x, baseY, h, lean, stage){
+  const leaves = 4 + stage * 3;
+  for(let k = 0; k < leaves; k++){
+    const angle = (k - leaves/2) * .18;
+    const lh = h * (.82 + (k % 4) * .06);
+    const px = x + Math.sin(angle) * 12 + lean * .25;
+    const py = baseY - lh * .52;
+    ctx.strokeStyle = "#1f6c38";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(x, baseY);
+    ctx.lineTo(px, py);
+    ctx.stroke();
+    drawTinyLeaf(px, py - lh * .18, 5.5, 18 + stage * 2, angle, k % 2 ? "#57c56c" : "#6bd47b");
+  }
+}
+
+function drawCrypt(x, baseY, h, lean, stage){
+  const leaves = 5 + stage * 3;
+  for(let k = 0; k < leaves; k++){
+    const side = (k - leaves/2);
+    const color = k % 2 ? "#4fa85e" : "#367b46";
+    drawTinyLeaf(x + side * 4 + lean * .2, baseY - 9 - (k % 3) * 3, 5, 12 + stage * 2, side * .12, color);
+  }
+}
+
+function drawJavaMoss(x, baseY, h, lean, stage){
+  const clumps = 12 + stage * 8;
+  for(let i = 0; i < clumps; i++){
+    const ox = ((i * 7) % (26 + stage * 6)) - (13 + stage * 3);
+    const oy = -((i * 11) % (14 + stage * 7));
+    ctx.fillStyle = i % 3 ? "#3db963" : "#257d44";
+    ctx.globalAlpha = .76;
+    ctx.beginPath();
+    ctx.arc(x + ox, baseY + oy, 2 + (i % 3), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawLudwigia(x, baseY, h, lean, stage){
+  ctx.strokeStyle = "#6d1f2a";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(x, baseY);
+  ctx.quadraticCurveTo(x + lean * .35, baseY - h * .5, x + lean, baseY - h);
+  ctx.stroke();
+  const leaves = 5 + stage * 2;
+  for(let k = 0; k < leaves; k++){
+    const t = (k + 1) / (leaves + 1);
+    const side = k % 2 ? 1 : -1;
+    drawTinyLeaf(x + lean * t + side * 5, baseY - h * t, 3, 8, side * .55, k % 2 ? "#bb3d4b" : "#d2575f");
+  }
+}
+
+function drawRotala(x, baseY, h, lean, stage){
+  const stems = 2 + stage;
+  for(let s = 0; s < stems; s++){
+    const ox = (s - stems/2) * 5;
+    ctx.strokeStyle = "#7d3c51";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(x + ox, baseY);
+    ctx.quadraticCurveTo(x + ox + lean * .25, baseY - h * .5, x + ox + lean, baseY - h);
+    ctx.stroke();
+    for(let k = 0; k < 5 + stage; k++){
+      const t = (k + 1) / (6 + stage);
+      drawTinyLeaf(x + ox + lean * t + (k%2?-3:3), baseY - h * t, 2.5, 5.5, k%2?.5:-.5, k % 2 ? "#e1848c" : "#c76575");
+    }
+  }
+}
+
+function drawPurpleVelvet(x, baseY, h, lean, stage){
+  ctx.strokeStyle = "#5b2a6e";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(x, baseY);
+  ctx.quadraticCurveTo(x + lean * .35, baseY - h * .5, x + lean, baseY - h);
+  ctx.stroke();
+  const leaves = 5 + stage * 2;
+  for(let k = 0; k < leaves; k++){
+    const t = (k + 1) / (leaves + 1);
+    const side = k % 2 ? 1 : -1;
+    drawTinyLeaf(x + lean * t + side * 5, baseY - h * t, 3.8, 8.5, side * .55, k % 2 ? "#8b5bb5" : "#6d3b8c");
+  }
+}
+
+function drawPlants(){
+  ensurePlantSlots();
+
+  const j = jar();
+  const baseY = j.y + j.h/2 - 43;
+  const left = j.x - j.w/2 + 44;
+  const right = j.x + j.w/2 - 44;
+
+  for(let i = 0; i < state.plantSlots.length; i++){
+    const pl = state.plantSlots[i];
+    const stage = plantStage(i);
+    if(stage <= 0) continue;
+
+    const x = left + pl.xRatio * (right - left);
+    const baseHeight = pl.role === "large" ? 52 : pl.role === "background" ? 58 : pl.role === "low" ? 22 : 38;
+    const h = baseHeight + stage * (pl.role === "large" ? 17 : pl.role === "background" ? 14 : pl.role === "low" ? 7 : 11) + pl.heightSeed * 12;
+    const lean = pl.rooted ? 0 : pl.lean;
+
+    if(pl.type === "hairgrass") drawHairgrass(x, baseY, h, lean, stage);
+    else if(pl.type === "bacopa") drawBacopa(x, baseY, h, lean, stage);
+    else if(pl.type === "javaFern") drawJavaFern(x, baseY, h, lean, stage);
+    else if(pl.type === "amazonSword") drawAmazonSword(x, baseY, h, lean, stage);
+    else if(pl.type === "crypt") drawCrypt(x, baseY, h, lean, stage);
+    else if(pl.type === "javaMoss") drawJavaMoss(x, baseY, h, lean, stage);
+    else if(pl.type === "ludwigia") drawLudwigia(x, baseY, h, lean, stage);
+    else if(pl.type === "rotala") drawRotala(x, baseY, h, lean, stage);
+    else if(pl.type === "purpleVelvet") drawPurpleVelvet(x, baseY, h, lean, stage);
+  }
+}
+
+
+function mythicalAlpha(i){
+  return 0.24 + Math.sin(performance.now() * 0.002 + i * 1.7) * 0.08;
+}
+
+function shellPalette(i, mythical){
+  if(mythical){
+    return ["#b9e9ff", "#fff3d7", "#8f6bc7"];
+  }
+  const palettes = [
+    ["#b99055", "#e6d2a0", "#6d4a2a"],
+    ["#d8c7a2", "#fff1c9", "#8a795f"],
+    ["#8e6b4f", "#cba27a", "#4f3427"],
+    ["#c97b42", "#f0bd77", "#7b3f25"],
+    ["#9a8f7d", "#e4dccb", "#5d564b"]
+  ];
+  return palettes[i % palettes.length];
+}
+
+function drawShellGlow(x, y, s, i){
+  const a = mythicalAlpha(i);
+  const g = ctx.createRadialGradient(x, y, 1, x, y, 18 * s);
+  g.addColorStop(0, `rgba(215,235,255,${a})`);
+  g.addColorStop(.45, `rgba(180,130,255,${a * .42})`);
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(x, y, 18 * s, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawSpiralShell(x, y, s, rot, base, light, dark, mythical, i){
+  if(mythical) drawShellGlow(x, y, s, i);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.scale(s, s);
+  ctx.fillStyle = base;
+  ctx.beginPath();
+  ctx.arc(0, 0, 6.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = dark;
+  ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  ctx.arc(0, 0, 5.8, .2, Math.PI * 1.85);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, 3.3, .4, Math.PI * 1.75);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, 1.4, .2, Math.PI * 1.8);
+  ctx.stroke();
+  ctx.fillStyle = light;
+  ctx.globalAlpha = mythical ? .78 : .55;
+  ctx.fillRect(-3, -5, 4, 1);
+  if(mythical) ctx.fillRect(1, -3, 2, 1);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawClamShell(x, y, s, rot, base, light, dark, mythical, i){
+  if(mythical) drawShellGlow(x, y, s, i);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.scale(s, s);
+  ctx.fillStyle = base;
+  ctx.beginPath();
+  ctx.moveTo(-8, 2);
+  ctx.quadraticCurveTo(-5, -6, 0, -7);
+  ctx.quadraticCurveTo(6, -6, 9, 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = dark;
+  ctx.lineWidth = 1;
+  for(let r = -3; r <= 3; r++){
+    ctx.beginPath();
+    ctx.moveTo(0, 1);
+    ctx.lineTo(r * 2.2, -5 + Math.abs(r));
+    ctx.stroke();
+  }
+  ctx.fillStyle = light;
+  ctx.globalAlpha = mythical ? .78 : .5;
+  ctx.fillRect(-4, -5, 8, 1);
+  if(mythical) ctx.fillRect(-1, -7, 2, 1);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawBrokenShell(x, y, s, rot, base, light, dark, mythical, i){
+  if(mythical) drawShellGlow(x, y, s, i);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.scale(s, s);
+  ctx.fillStyle = base;
+  ctx.beginPath();
+  ctx.moveTo(-8, 2);
+  ctx.lineTo(-3, -5);
+  ctx.lineTo(3, -3);
+  ctx.lineTo(7, 2);
+  ctx.lineTo(2, 4);
+  ctx.lineTo(-5, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = dark;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-4, 2);
+  ctx.lineTo(2, -2);
+  ctx.lineTo(5, 1);
+  ctx.stroke();
+  ctx.fillStyle = light;
+  ctx.globalAlpha = mythical ? .72 : .45;
+  ctx.fillRect(-2, -3, 4, 1);
+  if(mythical) ctx.fillRect(2, 1, 2, 1);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawConeShell(x, y, s, rot, base, light, dark, mythical, i){
+  if(mythical) drawShellGlow(x, y, s, i);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.scale(s, s);
+  ctx.fillStyle = base;
+  ctx.beginPath();
+  ctx.moveTo(-8, 3);
+  ctx.lineTo(9, 0);
+  ctx.lineTo(-5, -5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = dark;
+  ctx.lineWidth = 1;
+  for(let r = -5; r < 7; r += 3){
+    ctx.beginPath();
+    ctx.moveTo(r, 2);
+    ctx.lineTo(r + 2, -3);
+    ctx.stroke();
+  }
+  ctx.fillStyle = light;
+  ctx.globalAlpha = mythical ? .75 : .45;
+  ctx.fillRect(-5, -3, 6, 1);
+  if(mythical) ctx.fillRect(2, -1, 2, 1);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawShells(){
+  const j = jar();
+  const left = j.x - j.w/2 + 40;
+  const right = j.x + j.w/2 - 40;
+  const baseY = j.y + j.h/2 - 38;
+  const n = Math.min(state.shells, 28);
+  const maxMythical = 3;
+  let mythicalCount = 0;
+
+  for(let i = 0; i < n; i++){
+    const row = Math.floor(i / 10);
+    const col = i % 10;
+    const spread = right - left;
+    const x = left + ((col + .35 * row) / 9) * spread + Math.sin(i * 4.71) * 5;
+    const y = baseY - row * 7 + (i % 3) * 2;
+    const scale = .82 + ((i * 13) % 7) * .055;
+    const rot = ((i * 19) % 17 - 8) * .045;
+    const mythical = ((i * 17 + state.prestige * 13) % 11 === 0) && mythicalCount < maxMythical;
+    if(mythical){ mythicalCount++; state.mythicalSeen = true; }
+
+    const pal = shellPalette(i, mythical);
+    const type = i % 4;
+
+    if(type === 0) drawSpiralShell(x, y, scale, rot, pal[0], pal[1], pal[2], mythical, i);
+    if(type === 1) drawClamShell(x, y, scale, rot, pal[0], pal[1], pal[2], mythical, i);
+    if(type === 2) drawBrokenShell(x, y, scale, rot, pal[0], pal[1], pal[2], mythical, i);
+    if(type === 3) drawConeShell(x, y, scale, rot, pal[0], pal[1], pal[2], mythical, i);
+
+    ctx.fillStyle = "rgba(0,0,0,.18)";
+    ctx.fillRect(x - 7 * scale, y + 3 * scale, 14 * scale, 2);
+
+    if(mythical && Math.sin(performance.now() * .004 + i) > .82){
+      ctx.fillStyle = "rgba(255,255,255,.85)";
+      ctx.fillRect(x + 8 * scale, y - 7 * scale, 1.4, 1.4);
+    }
+  }
+}
+
+
+function hexToRgb(hex){
+  if(typeof hex !== "string"){
+    return {r:255, g:255, b:255};
+  }
+
+  const rgbMatch = hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+  if(rgbMatch){
+    return {
+      r:parseInt(rgbMatch[1], 10),
+      g:parseInt(rgbMatch[2], 10),
+      b:parseInt(rgbMatch[3], 10)
+    };
+  }
+
+  hex = hex.replace("#", "").trim();
+  if(hex.length === 3){
+    hex = hex.split("").map(c => c + c).join("");
+  }
+
+  const num = parseInt(hex, 16);
+  if(Number.isNaN(num)){
+    return {r:255, g:255, b:255};
+  }
+
+  return {
+    r:(num >> 16) & 255,
+    g:(num >> 8) & 255,
+    b:num & 255
+  };
+}
+
+function colorToRgb(color){
+  return hexToRgb(color);
+}
+
+function darken(hex, amount){
+  const {r,g,b} = colorToRgb(hex);
+  return `rgb(${Math.round(r*(1-amount))},${Math.round(g*(1-amount))},${Math.round(b*(1-amount))})`;
+}
+
+function lighten(hex, amount){
+  const {r, g, b} = colorToRgb(hex);
+  const nr = Math.round(r + (255 - r) * amount);
+  const ng = Math.round(g + (255 - g) * amount);
+  const nb = Math.round(b + (255 - b) * amount);
+  return `rgb(${nr},${ng},${nb})`;
+}
+
+function pixelColorToRgb(color){
+  if(typeof color !== "string") return {r:230,g:72,b:29};
+
+  const rgbMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+  if(rgbMatch){
+    return {
+      r:parseInt(rgbMatch[1],10),
+      g:parseInt(rgbMatch[2],10),
+      b:parseInt(rgbMatch[3],10)
+    };
+  }
+
+  let hex = color.replace("#","").trim();
+  if(hex.length === 3){
+    hex = hex.split("").map(c => c + c).join("");
+  }
+
+  const num = parseInt(hex,16);
+  if(Number.isNaN(num)) return {r:230,g:72,b:29};
+
+  return {
+    r:(num >> 16) & 255,
+    g:(num >> 8) & 255,
+    b:num & 255
+  };
+}
+
+function pixelShade(color, percent){
+  const {r,g,b} = pixelColorToRgb(color);
+  const factor = 1 + percent / 100;
+  return `rgb(${Math.max(0,Math.min(255,Math.round(r*factor)))},${Math.max(0,Math.min(255,Math.round(g*factor)))},${Math.max(0,Math.min(255,Math.round(b*factor)))})`;
+}
+
+function drawPixelBlock(x,y,w,h,c){
+  ctx.fillStyle = c;
+  ctx.fillRect(x,y,w,h);
+}
+
+function shrimpPalette(s){
+  const rawIndex = s && typeof s.variantIndex === "number" ? s.variantIndex : currentVariantIndex();
+  const idx = ((rawIndex % shrimpVariants.length) + shrimpVariants.length) % shrimpVariants.length;
+  const variant = shrimpVariants[idx] || shrimpVariants[0];
+
+  let baseColor = variant.color || "#d62828";
+  let accentColor = variant.accent || lighten(baseColor, 0.85);
+
+  if(s && s.mutant){
+    baseColor = lighten(baseColor, 0.45);
+    accentColor = lighten(accentColor, 0.2);
+  }
+
+  return {
+    base: baseColor,
+    accent: accentColor,
+    pattern: variant.pattern || null
+  };
+}
+
+function drawPixels(pixels, ox, oy, color){
+  ctx.fillStyle = color;
+  for(const [px, py] of pixels){
+    ctx.fillRect(ox + px, oy + py, 1, 1);
+  }
+}
+
+function drawShrimp(s, t){
+  if(!s) return;
+
+  const x = Math.round(Number.isFinite(s.x) ? s.x : 0);
+  const y = Math.round((Number.isFinite(s.y) ? s.y : 0) + Math.sin(s.bob || 0) * 2);
+  const dir = s.vx >= 0 ? 1 : -1;
+  const scale = (s.scale || 1) * 0.65;
+
+  const pal = shrimpPalette(s) || {base:"#e5481d", accent:"#ffc39c", pattern:null};
+  const base = pal.base || "#e5481d";
+
+  const palette = {
+    dark: pixelShade(base, -38),
+    mid: base,
+    orange: pixelShade(base, 12),
+    light: pixelShade(base, 42),
+    pale: pal.accent || pixelShade(base, 72),
+    eye: "#050505"
+  };
+
+  function p(x,y,w,h,c){
+    drawPixelBlock(x,y,w,h,c);
+  }
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir * scale, scale);
+
+  // antennae
+  p(-18,-6,1,1,palette.orange);
+  p(-17,-8,1,1,palette.orange);
+  p(-16,-10,1,1,palette.orange);
+  p(-15,-11,1,2,palette.orange);
+
+  p(-18,-3,1,1,palette.orange);
+  p(-16,-3,1,1,palette.orange);
+  p(-14,-2,1,1,palette.orange);
+
+  // rostrum / nose
+  p(-16,-5,4,2,palette.mid);
+  p(-14,-4,6,2,palette.orange);
+  p(-12,-3,7,3,palette.orange);
+  p(-10,0,5,2,palette.mid);
+
+  // head
+  p(-8,-7,8,2,palette.orange);
+  p(-10,-5,13,3,palette.orange);
+  p(-9,-2,14,4,palette.mid);
+  p(-7,2,11,3,palette.dark);
+
+  // clean curved full-color back, final accepted branch
+  p(0,-8,7,2,palette.orange);
+  p(6,-9,8,2,palette.orange);
+  p(13,-8,8,2,palette.orange);
+  p(20,-7,5,2,palette.mid);
+
+  // fill line from accepted v6/v7 branch
+  p(6,-7,8,2,palette.orange);
+
+  // body middle
+  p(2,-5,25,4,palette.light);
+  p(5,-1,26,4,palette.orange);
+  p(6,3,23,3,palette.mid);
+  p(10,6,16,3,palette.dark);
+
+  // abdomen curve
+  p(27,-5,8,4,palette.orange);
+  p(31,-2,8,4,palette.mid);
+  p(34,2,7,5,palette.orange);
+  p(35,7,6,5,palette.mid);
+  p(33,12,6,5,palette.orange);
+  p(29,17,7,5,palette.dark);
+  p(25,21,7,4,palette.mid);
+
+  // compact tail fan
+  p(37,5,5,3,palette.orange);
+  p(41,4,3,2,palette.mid);
+  p(41,8,3,2,palette.light);
+  p(37,11,4,2,palette.dark);
+  p(40,6,2,4,palette.mid);
+
+  // highlights, restrained
+  p(4,-7,6,1,palette.pale);
+  p(11,-7,5,1,palette.light);
+  p(20,-5,4,1,palette.pale);
+  p(34,4,3,1,palette.pale);
+  p(32,15,3,1,palette.light);
+
+  // segment shading softened
+  p(4,3,2,5,palette.mid);
+  p(12,2,2,6,palette.mid);
+  p(20,1,2,6,palette.mid);
+  p(28,0,2,6,palette.mid);
+  p(34,6,2,5,palette.mid);
+
+  // rili / crystal pattern support
+  if(pal.pattern === "rili"){
+    p(8,-5,8,3,palette.pale);
+    p(8,-2,9,4,palette.pale);
+    p(10,2,6,3,palette.pale);
+  }
+
+  // short tucked legs
+  p(-4,5,1,4,palette.orange);
+  p(-3,8,1,2,palette.mid);
+
+  p(3,6,1,4,palette.orange);
+  p(4,9,1,2,palette.mid);
+
+  p(10,7,1,4,palette.orange);
+  p(11,10,1,2,palette.mid);
+
+  p(17,7,1,4,palette.orange);
+  p(18,10,1,2,palette.mid);
+
+  p(24,7,1,3,palette.orange);
+  p(25,9,1,2,palette.mid);
+
+  // lower shadow pixels
+  p(-6,3,8,2,"rgba(0,0,0,.20)");
+  p(6,8,16,2,"rgba(0,0,0,.20)");
+  p(27,23,5,2,"rgba(0,0,0,.20)");
+
+  // eye
+  p(-7,-4,3,4,palette.eye);
+  p(-6,-4,1,1,"#ffffff");
+
+  ctx.restore();
+
+  if(s.mutant){
+    const sparkle = (Math.sin(t / 220 + (s.bob || 0) * 10) + 1) / 2;
+    if(sparkle > 0.82){
+      ctx.fillStyle = "#fff8ff";
+      ctx.fillRect(x - 5, y - 5, 1, 1);
+      ctx.fillRect(x + 6, y - 1, 1, 1);
+      ctx.fillRect(x, y + 5, 1, 1);
+    }
+  }
+}
+
+function updateShrimp(){
+  if(state.activeEventType === "gap") return;
+  const j = jar();
+
+  // Pixel shrimp sprite footprint after scale. Extra padding keeps the whole body inside glass.
+  const spritePadX = 34;
+  const spritePadY = 18;
+
+  const left = j.x - j.w/2 + 16 + spritePadX;
+  const right = j.x + j.w/2 - 16 - spritePadX;
+  const top = j.y - j.h/2 + 46 + spritePadY;
+  const bottom = j.y + j.h/2 - 38 - spritePadY;
+
+  for(const s of state.list){
+    if(s.watchUntil && performance.now() < s.watchUntil){
+      s.bob += 0.005;
+      continue;
+    }
+    if(Math.random() < 0.008) s.vx += (Math.random() - 0.5) * 0.25;
+    if(Math.random() < 0.008) s.vy += (Math.random() - 0.5) * 0.12;
+
+    s.vx = Math.max(-0.8, Math.min(0.8, s.vx));
+    s.vy = Math.max(-0.35, Math.min(0.35, s.vy));
+
+    s.x += s.vx;
+    s.y += s.vy;
+    s.bob += 0.08;
+
+    s.x += (j.x - s.x) * 0.0008;
+    s.y += (j.y + 42 - s.y) * 0.0006;
+
+    if(s.x < left){
+      s.x = left;
+      s.vx = Math.abs(s.vx);
+    }
+    if(s.x > right){
+      s.x = right;
+      s.vx = -Math.abs(s.vx);
+    }
+    if(s.y < top){
+      s.y = top;
+      s.vy = Math.abs(s.vy);
+    }
+    if(s.y > bottom){
+      s.y = bottom;
+      s.vy = -Math.abs(s.vy);
+    }
+  }
+}
+
+
+function drawOscarShadow(){
+  if(state.activeEventType !== "oscar") return;
+
+  const elapsed = performance.now() - (state.oscarStart || performance.now());
+  const duration = 7000;
+  const rawT = Math.min(1, Math.max(0, elapsed / duration));
+  const ease = rawT * rawT * (3 - 2 * rawT);
+  const j = jar();
+
+  const startX = j.x + j.w * 1.18;
+  const endX = j.x - j.w * 1.18;
+  const x = startX + (endX - startX) * ease;
+  const y = j.y - j.h * .08 + Math.sin(rawT * Math.PI) * 18;
+  const alpha = Math.sin(rawT * Math.PI) * .46;
+
+  // Tank dim first, so it feels like light is being blocked.
+  ctx.fillStyle = `rgba(0,0,0,${alpha * .34})`;
+  ctx.fillRect(j.x - j.w/2 + 7, j.y - j.h/2 + 36, j.w - 14, j.h - 42);
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x, y);
+  ctx.scale(2.25, .76);
+  ctx.fillStyle = "rgba(0,0,0,0.96)";
+
+  // Single continuous Oscar-like silhouette.
+  // No overlapping blobs, no catfish cosplay, no shadow lasagna.
+  ctx.beginPath();
+
+  // blunt head / nose
+  ctx.moveTo(-76, 0);
+
+  // upper head into back
+  ctx.bezierCurveTo(-70, -24, -46, -38, -16, -42);
+  ctx.bezierCurveTo(10, -48, 42, -42, 72, -23);
+
+  // dorsal soft ridge integrated into same fill
+  ctx.bezierCurveTo(45, -38, 22, -52, 0, -43);
+
+  // reconnect along upper body
+  ctx.bezierCurveTo(34, -43, 66, -30, 88, -12);
+
+  // rounded fan tail
+  ctx.bezierCurveTo(113, -34, 132, -25, 126, 0);
+  ctx.bezierCurveTo(132, 25, 113, 34, 88, 12);
+
+  // lower body
+  ctx.bezierCurveTo(62, 34, 24, 46, -14, 42);
+
+  // lower fin / belly mass integrated into path
+  ctx.bezierCurveTo(12, 55, 38, 45, 52, 26);
+
+  // return to head/belly
+  ctx.bezierCurveTo(18, 42, -48, 34, -76, 0);
+
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+
+  // Soft trailing darkness.
+  ctx.fillStyle = `rgba(0,0,0,${alpha * .10})`;
+  ctx.fillRect(j.x - j.w/2 + 7, j.y - j.h/2 + 36, j.w - 14, j.h - 42);
+}
+
+
+function drawCohesionOverlay(){
+  const usableHeight = canvasHeight();
+  const j = jar();
+
+  // subtle water depth and center glow, kept HTML/canvas friendly. No Pixar crimes.
+  const depth = ctx.createLinearGradient(0, j.y - j.h/2, 0, j.y + j.h/2);
+  depth.addColorStop(0, "rgba(120,210,255,.045)");
+  depth.addColorStop(.52, "rgba(30,90,130,.025)");
+  depth.addColorStop(1, "rgba(0,0,0,.14)");
+  ctx.fillStyle = depth;
+  ctx.fillRect(j.x - j.w/2 + 8, j.y - j.h/2 + 38, j.w - 16, j.h - 44);
+
+  const glow = ctx.createRadialGradient(j.x, j.y - j.h*.22, 10, j.x, j.y, j.w*.62);
+  glow.addColorStop(0, "rgba(130,210,235,.07)");
+  glow.addColorStop(.55, "rgba(80,150,180,.035)");
+  glow.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(j.x - j.w/2, j.y - j.h/2, j.w, j.h);
+
+  // light rays
+  ctx.save();
+  ctx.globalAlpha = .12;
+  for(let i = 0; i < 5; i++){
+    const x = j.x - j.w*.25 + i * j.w*.13;
+    const ray = ctx.createLinearGradient(x, j.y - j.h/2 + 55, x + 30, j.y + j.h/2);
+    ray.addColorStop(0, "rgba(190,240,255,.16)");
+    ray.addColorStop(1, "rgba(190,240,255,0)");
+    ctx.fillStyle = ray;
+    ctx.beginPath();
+    ctx.moveTo(x, j.y - j.h/2 + 52);
+    ctx.lineTo(x + 18, j.y - j.h/2 + 52);
+    ctx.lineTo(x + 70, j.y + j.h/2 - 30);
+    ctx.lineTo(x + 25, j.y + j.h/2 - 30);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // vignette
+  const vignette = ctx.createRadialGradient(window.innerWidth/2, usableHeight*.45, usableHeight*.16, window.innerWidth/2, usableHeight*.45, usableHeight*.72);
+  vignette.addColorStop(0, "rgba(0,0,0,0)");
+  vignette.addColorStop(1, "rgba(0,0,0,.16)");
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0,0,window.innerWidth,usableHeight);
+}
+
+function drawEventOverlay(){
+  if(state.activeEventType === "gap"){
+    const j = jar();
+    ctx.fillStyle = "rgba(205,230,255,.035)";
+    ctx.fillRect(j.x - j.w/2 + 8, j.y - j.h/2 + 38, j.w - 16, j.h - 44);
+  }
+}
+
+function drawDayNightOverlay(){
+  const usableHeight = canvasHeight();
+  const hour = new Date().getHours();
+  let overlay = null;
+
+  if(hour >= 18 && hour < 20){
+    overlay = "rgba(255,140,80,0.08)";
+  } else if(hour >= 20 || hour < 6){
+    overlay = "rgba(35,50,115,0.14)";
+  }
+
+  if(overlay){
+    ctx.fillStyle = overlay;
+    ctx.fillRect(0, 0, window.innerWidth, usableHeight);
+  }
+}
+
+function drawFlash(){
+  if(state.flash > 0){
+    const usableHeight = canvasHeight();
+    ctx.fillStyle = `rgba(255,255,255,${state.flash * 0.22})`;
+    ctx.fillRect(0, 0, window.innerWidth, usableHeight);
+    state.flash -= 0.03;
+  }
+  if(state.prestigePulse > 0){
+    state.prestigePulse = Math.max(0, state.prestigePulse - 0.05);
+  }
+}
+
+function updateUI(t){
+  titleEl.style.color = currentTitleColor(t);
+
+  const pulseScale = 1 + state.prestigePulse * 0.08;
+  titleEl.style.transform = `scale(${pulseScale})`;
+
+  coinsEl.innerText = formatNumber(state.coins);
+  shrimpEl.innerText = formatNumber(state.shrimp);
+  shellsEl.innerText = state.shells;
+  totalShrimpEl.innerText = formatNumber(state.totalShrimpEver);
+  shrimpTypeEl.innerText = currentShrimpType();
+
+  const oneCost = shrimpCost();
+  const tenCost = totalCostForNextShrimp(10);
+  const maxCount = getCachedBuyMaxCount();
+
+  buyBtn.innerText = `Buy shrimp (${formatNumber(oneCost)})`;
+  buy10Btn.innerText = `Buy 10 (${formatNumber(tenCost)})`;
+  buyMaxBtn.innerText = `Buy max (${maxCount})`;
+  prestigeBtn.innerText = `Prestige (${formatNumber(prestigeCost())})`;
+
+  buyBtn.disabled = state.coins < oneCost;
+  buy10Btn.disabled = state.coins < tenCost;
+  buyMaxBtn.disabled = maxCount <= 0;
+  prestigeBtn.disabled = state.coins < prestigeCost();
+}
+
+
+function tryEvents(t){
+  const now = Date.now();
+
+  if(state.eventActive){
+    if(now >= state.eventEndsAt){
+      state.eventActive = false;
+      state.activeEventType = null;
+      state.eventEndsAt = 0;
+    }
+    return;
+  }
+
+  // Active-session only. Offline doesn't get to have mystical shrimp moments. Ridiculous sentence.
+  if(now - state.lastClickTime > 30000 && !state.stillnessSeen){
+    state.eventActive = true;
+    state.activeEventType = "stillness";
+    state.eventEndsAt = now + 2200;
+    state.stillnessSeen = true;
+    showStatus("Still Water: Not everything needs to be touched.", 4200, 0);
+    return;
+  }
+
+  // Watcher: only while player has stopped interacting for a short beat.
+  const idleForWatcher = now - state.lastClickTime > 7000;
+
+  if(now - state.lastEventTime < 45000) return;
+  state.lastEventTime = now;
+
+  const r = Math.random();
+
+  // The Gap (1%): 5 seconds of visual movement pause.
+  if(r < 0.01){
+    state.eventActive = true;
+    state.activeEventType = "gap";
+    state.eventEndsAt = now + 5000;
+    state.gapSeen = true;
+    showStatus("The Gap: For a moment, nothing moved.", 4200, 0);
+    return;
+  }
+
+  // Oscar shadow (3%): visual silhouette pass.
+  if(r < 0.04){
+    state.eventActive = true;
+    state.activeEventType = "oscar";
+    state.oscarStart = performance.now();
+    state.eventEndsAt = now + 4200;
+    state.oscarSeen = true;
+    showStatus("Something Larger: The glass is thinner than it looks.", 4300, 0);
+    return;
+  }
+
+  // Watcher (5%): one shrimp pauses. Message is the moment.
+  if(idleForWatcher && r < 0.09 && state.list.length > 0){
+    state.eventActive = true;
+    state.activeEventType = "watcher";
+    state.eventEndsAt = now + 2600;
+    state.watcherSeen = true;
+    const s = state.list[Math.floor(Math.random() * state.list.length)];
+    if(s){
+      s.watchUntil = performance.now() + 2400;
+    }
+    showStatus("The Watcher: One shrimp briefly understood something.", 3600, 0);
+    return;
+  }
+}
+
+
+function loop(t){
+  if(!state.lastFrameTime) state.lastFrameTime = t;
+
+  const dtMs = Math.min(100, t - state.lastFrameTime);
+  state.lastFrameTime = t;
+  const dtSec = dtMs / 1000;
+
+  state.coins += incomePerSecond() * dtSec;
+
+  passiveBreed(dtSec);
+  updateShrimp();
+  tryEvents(t);
+  unlockAchievements();
+  checkMilestones();
+  if(achievementsDirty && achPanel.style.display === "block"){
+    renderAchievements();
+  }
+
+  drawBackground();
+  drawJar();
+  drawPlants();
+  drawShells();
+
+  for(const s of state.list){
+    try{
+      drawShrimp(s, t);
+    } catch(err){
+      console.error("Shrimp draw failed:", err);
+    }
+  }
+
+  drawOscarShadow();
+
+  drawFlash();
+  drawCohesionOverlay();
+  drawEventOverlay();
+  drawDayNightOverlay();
+  updateUI(t);
+  updateStatusText(t);
+
+  state.saveTimer += dtMs;
+  if(state.saveTimer >= 5000){
+    state.saveTimer = 0;
+    saveGame();
+  }
+
+  requestAnimationFrame(loop);
+}
+
+updatePageBackground();
+
+function applyBackgroundCatchup(){
+  if(!Number.isFinite(state.hiddenAt)) return;
+
+  const now = Date.now();
+  const elapsedSeconds = Math.min(MAX_OFFLINE_SECONDS, Math.max(0, (now - state.hiddenAt) / 1000));
+
+  if(elapsedSeconds >= 5){
+    const earned = incomePerSecond() * elapsedSeconds;
+    state.coins += earned;
+    invalidateBuyMaxCache();
+    showStatus(`Away ${formatAwayTime(elapsedSeconds)} • +${formatNumber(earned)} coins`, 5200, 300);
+  }
+
+  state.hiddenAt = null;
+  saveGame();
+}
+
+document.addEventListener("visibilitychange", () => {
+  if(document.hidden){
+    state.hiddenAt = Date.now();
+    saveGame();
+  } else {
+    applyBackgroundCatchup();
+  }
+});
+
+window.addEventListener("pagehide", () => {
+  state.hiddenAt = Date.now();
+  saveGame();
+});
+
+window.addEventListener("pageshow", () => {
+  applyBackgroundCatchup();
+});
+
+applyOfflineProgress();
+unlockAchievements();
+checkMilestones();
+syncShrimp();
+renderAchievements();
+invalidateBuyMaxCache();
+
+
+// Extra save protection for itch.io/mobile browsers.
+setInterval(saveGame, 5000);
+
+window.addEventListener("beforeunload", saveGame);
+syncShrimp();
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
