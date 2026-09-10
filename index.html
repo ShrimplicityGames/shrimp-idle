@@ -21,18 +21,6 @@
     -webkit-tap-highlight-color:transparent;
   }
 
-  html, body, canvas, button, #controls, #topbar, #gameTitle, #statusText, #achievements{
-    -webkit-user-select:none;
-    user-select:none;
-    -webkit-touch-callout:none;
-    touch-action:manipulation;
-  }
-
-  html{
-    touch-action:manipulation;
-  }
-
-
   body{
     margin:0;
     min-height:100vh;
@@ -390,20 +378,6 @@
 </head>
 <body>
 
-<!-- Itch.io iframe save warning -->
-<div id="itchBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a1f26;border-bottom:2px solid #2e6cff;padding:10px 16px;align-items:center;justify-content:space-between;gap:12px;font-family:sans-serif;font-size:13px;color:#eef6ff;">
-  <span>⚠️ Saves won't persist in the itch.io embed. Open in a new tab to keep your progress.</span>
-  <div style="display:flex;gap:8px;flex-shrink:0;">
-    <button onclick="window.open(window.location.href,'_blank')" style="background:#2e6cff;color:#fff;border:none;border-radius:4px;padding:6px 14px;cursor:pointer;font-size:13px;">Open in New Tab</button>
-    <button onclick="document.getElementById('itchBanner').style.display='none'" style="background:transparent;color:#aaa;border:1px solid #444;border-radius:4px;padding:6px 10px;cursor:pointer;font-size:13px;">Dismiss</button>
-  </div>
-</div>
-<script>
-  if(window.self !== window.top){
-    document.getElementById("itchBanner").style.display = "flex";
-  }
-</script>
-
 <div id="topbar">
   <div id="topline">
     <span>coins: <span id="coins">0</span></span>
@@ -453,21 +427,6 @@
 </div>
 
 <script>
-
-// Mobile polish: stop double-tap zoom and long-press selection.
-let lastTouchEnd = 0;
-document.addEventListener("touchend", (e) => {
-  const now = Date.now();
-  if(now - lastTouchEnd <= 350){
-    e.preventDefault();
-  }
-  lastTouchEnd = now;
-}, {passive:false});
-
-document.addEventListener("selectstart", (e) => {
-  e.preventDefault();
-});
-
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 const titleEl = document.getElementById("gameTitle");
@@ -487,7 +446,7 @@ const styleOverlay = document.getElementById("styleOverlay");
 const substrateChoicesEl = document.getElementById("substrateChoices");
 const backgroundChoicesEl = document.getElementById("backgroundChoices");
 const applyStyleBtn = document.getElementById("applyStyle");
-const MAX_OFFLINE_SECONDS = 60 * 60 * 24;
+const MAX_OFFLINE_SECONDS = 60 * 60 * 4;
 const BREED_RATE_PER_SHRIMP = 0.00005;
 
 function canvasHeight(){
@@ -506,39 +465,8 @@ function resize(){
 resize();
 window.addEventListener("resize", resize);
 
-const SAVE_KEY = "shrimp_idle_release";
+const SAVE_KEY = "shrimp_idle_v2_3_unfrozen_clean";
 const VERSION = "1.1";
-
-function storageAvailable(type){
-  try{
-    const storage = window[type];
-    const testKey = "__shrimp_idle_storage_test__";
-    storage.setItem(testKey, "1");
-    storage.removeItem(testKey);
-    return true;
-  } catch(e){
-    return false;
-  }
-}
-
-const canUseLocalStorage = storageAvailable("localStorage");
-
-function writeSaveData(key, value){
-  try{
-    if(canUseLocalStorage) localStorage.setItem(key, value);
-  } catch(e){
-    console.warn("save failed:", e);
-  }
-}
-
-function readSaveData(key){
-  try{
-    if(canUseLocalStorage) return localStorage.getItem(key);
-  } catch(e){
-    console.warn("load failed:", e);
-  }
-  return null;
-}
 
 const shrimpVariants = [
   {name:"Cherry Red", color:"#d62828"},
@@ -600,7 +528,7 @@ const achievements = [
   { id:"s125", name:"Unnatural Density", desc:"Reach 125 shrimp", flavor:"The jar now behaves as a liquid.", test:s=>s.shrimp>=125 },
   { id:"s150", name:"The Swarm", desc:"Reach 150 shrimp", flavor:"Individual shrimp are now theoretical.", test:s=>s.shrimp>=150 },
 
-  { id:"sh1", name:"First Shell", desc:"Earn your first shell", flavor:"A small piece remains.", test:s=>s.shells>=1 },
+  { id:"sh1", name:"Fresh Start", desc:"Earn your first shell", flavor:"A small piece remains.", test:s=>s.shells>=1 },
   { id:"sh5", name:"Shell Pile", desc:"Earn 5 shells", flavor:"This is becoming a system.", test:s=>s.shells>=5 },
   { id:"sh10", name:"Calcium Hoard", desc:"Earn 10 shells", flavor:"The substrate economy is thriving.", test:s=>s.shells>=10 },
   { id:"sh25", name:"Shell Baron", desc:"Earn 25 shells", flavor:"You could probably build another jar from this.", test:s=>s.shells>=25 },
@@ -706,7 +634,6 @@ let state = {
 let currentStatusTimeout = 0;
 let currentStatusShowing = false;
 let statusQueue = [];
-let achievementsDirty = true;
 
 let cachedBuyMaxCount = 0;
 let cachedBuyMaxCoins = -1;
@@ -749,11 +676,11 @@ function saveGame(){
     lastSavedAt: state.lastSavedAt,
     hiddenAt: state.hiddenAt
   };
-  writeSaveData(SAVE_KEY, JSON.stringify(data));
+  localStorage.setItem(SAVE_KEY, JSON.stringify(data));
 }
 
 function loadGame(){
-  const raw = readSaveData(SAVE_KEY);
+  const raw = localStorage.getItem(SAVE_KEY);
   if(!raw) return;
   try{
     const data = JSON.parse(raw);
@@ -814,12 +741,7 @@ function shrimpCost(){
 }
 
 function prestigeCost(){
-  if(state.prestige <= 20){
-    return Math.floor(250 * Math.pow(1.75, state.prestige));
-  }
-
-  const costAt20 = 250 * Math.pow(1.75, 20);
-  return Math.floor(costAt20 * Math.pow(1.67, state.prestige - 20));
+  return Math.floor(250 * Math.pow(1.75, state.prestige));
 }
 
 function totalCostForNextShrimp(amount){
@@ -942,7 +864,7 @@ function renderStyleChoices(){
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "styleChoice" + (pendingStyle.substrate === s.id ? " selected" : "");
-    btn.addEventListener("pointerdown", (e) => { e.preventDefault(); chooseSubstrateStyle(s.id); });
+    btn.addEventListener("click", () => chooseSubstrateStyle(s.id));
 
     const swatch = document.createElement("div");
     swatch.className = "swatch";
@@ -959,7 +881,7 @@ function renderStyleChoices(){
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "styleChoice" + (pendingStyle.background === b.id ? " selected" : "");
-    btn.addEventListener("pointerdown", (e) => { e.preventDefault(); chooseBackgroundStyle(b.id); });
+    btn.addEventListener("click", () => chooseBackgroundStyle(b.id));
 
     const swatch = document.createElement("div");
     swatch.className = "swatch";
@@ -1055,19 +977,6 @@ function updateStatusText(now){
   }
 }
 
-function formatAwayTime(seconds){
-  const totalMinutes = Math.floor(seconds / 60);
-  const days = Math.floor(totalMinutes / 1440);
-  const hours = Math.floor((totalMinutes % 1440) / 60);
-  const minutes = totalMinutes % 60;
-
-  const parts = [];
-  if(days > 0) parts.push(`${days}d`);
-  if(hours > 0) parts.push(`${hours}h`);
-  if(minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
-  return parts.join(" ");
-}
-
 function applyOfflineProgress(){
   const now = Date.now();
   const savedAt = Number.isFinite(state.lastSavedAt) ? state.lastSavedAt : now;
@@ -1085,7 +994,7 @@ function applyOfflineProgress(){
   state.coins += earned;
   state.hiddenAt = null;
   invalidateBuyMaxCache();
-  showStatus(`Away ${formatAwayTime(offlineSeconds)} • +${formatNumber(earned)} coins`, 6500, 700);
+  showStatus(`The colony continued while you were away. +${formatNumber(earned)} coins.`, 6500, 700);
   saveGame();
 }
 
@@ -1286,41 +1195,22 @@ function doPrestige(){
   saveGame();
 }
 
-function bindFastButton(button, handler){
-  button.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    state.lastClickTime = Date.now();
-    handler();
-  });
-}
+buyBtn.onclick = ()=>{state.lastClickTime=Date.now();buyShrimp();};
+buy10Btn.onclick = ()=>{state.lastClickTime=Date.now();buyTen();};
+buyMaxBtn.onclick = ()=>{state.lastClickTime=Date.now();buyMax();};
+prestigeBtn.onclick = doPrestige;
+applyStyleBtn.onclick = applyStyleChoice;
 
-bindFastButton(buyBtn, buyShrimp);
-bindFastButton(buy10Btn, buyTen);
-bindFastButton(buyMaxBtn, buyMax);
-bindFastButton(prestigeBtn, doPrestige);
-bindFastButton(applyStyleBtn, applyStyleChoice);
-
-achBtn.addEventListener("pointerdown", (e) => {
-  e.preventDefault();
+achBtn.onclick = () => {
   achPanel.style.display = achPanel.style.display === "block" ? "none" : "block";
-  if(achievementsDirty){
-    renderAchievements();
-  }
-});
+};
 
 function unlockAchievements(){
-  let changed = false;
-
   for(const a of achievements){
     if(a.test(state) && !state.achievements.includes(a.id)){
       state.achievements.push(a.id);
-      changed = true;
       showStatus(`${a.name}: ${a.flavor || a.desc || "Unlocked."}`, 4200, 0);
     }
-  }
-
-  if(changed){
-    achievementsDirty = true;
   }
 }
 
@@ -1338,8 +1228,6 @@ function renderAchievements(){
         </div>
       `;
     }).join("");
-
-  achievementsDirty = false;
 }
 
 
@@ -2703,9 +2591,7 @@ function loop(t){
   tryEvents(t);
   unlockAchievements();
   checkMilestones();
-  if(achievementsDirty && achPanel.style.display === "block"){
-    renderAchievements();
-  }
+  renderAchievements();
 
   drawBackground();
   drawJar();
@@ -2735,6 +2621,8 @@ function loop(t){
     saveGame();
   }
 
+  syncShrimp();
+
   requestAnimationFrame(loop);
 }
 
@@ -2750,7 +2638,7 @@ function applyBackgroundCatchup(){
     const earned = incomePerSecond() * elapsedSeconds;
     state.coins += earned;
     invalidateBuyMaxCache();
-    showStatus(`Away ${formatAwayTime(elapsedSeconds)} • +${formatNumber(earned)} coins`, 5200, 300);
+    showStatus(`The colony continued while you were away. +${formatNumber(earned)} coins.`, 5200, 300);
   }
 
   state.hiddenAt = null;
@@ -2781,10 +2669,6 @@ checkMilestones();
 syncShrimp();
 renderAchievements();
 invalidateBuyMaxCache();
-
-
-// Extra save protection for itch.io/mobile browsers.
-setInterval(saveGame, 5000);
 
 window.addEventListener("beforeunload", saveGame);
 syncShrimp();
